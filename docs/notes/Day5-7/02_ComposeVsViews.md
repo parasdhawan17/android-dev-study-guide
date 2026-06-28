@@ -105,18 +105,21 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
 ## 3. Interoperability: Compose In Views
 
 Add ComposeView to existing XML layout
-&lt;!-- res/layout/activity_legacy.xml --&gt;
-&lt;LinearLayout ...&gt;
-&lt;TextView android:id="@+id/titleText" ... /&gt;
 
-&lt;!-- Compose UI embedded here --&gt;
-&lt;androidx.compose.ui.platform.ComposeView
-android:id="@+id/compose_view"
-android:layout_width="match_parent"
-android:layout_height="wrap_content" /&gt;
+```xml
+<!-- res/layout/activity_legacy.xml -->
+<LinearLayout ...>
+    <TextView android:id="@+id/titleText" ... />
 
-&lt;Button android:id="@+id/doneButton" ... /&gt;
-&lt;/LinearLayout&gt;
+    <!-- Compose UI embedded here -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button android:id="@+id/doneButton" ... />
+</LinearLayout>
+```
 
 Activity using ComposeView
 
@@ -333,11 +336,14 @@ fun ProfileErrorPreview() {
 
 XML Layout → Compose
 BEFORE (XML):
-&lt;LinearLayout android:orientation="vertical"&gt;
-&lt;TextView android:text="@{viewModel.title}" /&gt;
-&lt;ProgressBar android:visibility="@{viewModel.loading ? visible : gone}" /&gt;
-&lt;RecyclerView android:adapter="@adapter" /&gt;
-&lt;/LinearLayout&gt;
+
+```xml
+<LinearLayout android:orientation="vertical">
+    <TextView android:text="@{viewModel.title}" />
+    <ProgressBar android:visibility="@{viewModel.loading ? visible : gone}" />
+    <RecyclerView android:adapter="@adapter" />
+</LinearLayout>
+```
 
 AFTER (Compose):
 
@@ -458,36 +464,42 @@ VIEW SYSTEM PERFORMANCE TIPS:
 ## 10. Testing Comparison
 
 View System Testing
+
+```kotlin
 @RunWith(AndroidJUnit4::class)
 class ProfileActivityTest {
-@get:Rule
-val activityRule = ActivityScenarioRule(ProfileActivity::class.java)
+    @get:Rule
+    val activityRule = ActivityScenarioRule(ProfileActivity::class.java)
 
-@Test
-fun displaysUserName() {
-onView(withId(R.id.nameText))
-.check(matches(withText("John Doe")))
+    @Test
+    fun displaysUserName() {
+        onView(withId(R.id.nameText))
+            .check(matches(withText("John Doe")))
+    }
 }
-}
+```
 
 Compose Testing
+
+```kotlin
 @get:Rule
 val composeTestRule = createComposeRule()
 
 @Test
 fun profileScreen_displaysUserName() {
-composeTestRule.setContent {
-ProfileScreen(
-uiState = ProfileUiState(
-user = User("John Doe", "john@example.com")
-)
-)
-}
+    composeTestRule.setContent {
+        ProfileScreen(
+            uiState = ProfileUiState(
+                user = User("John Doe", "john@example.com")
+            )
+        )
+    }
 
-composeTestRule
-.onNodeWithText("John Doe")
-.assertIsDisplayed()
+    composeTestRule
+        .onNodeWithText("John Doe")
+        .assertIsDisplayed()
 }
+```
 
 ````kotlin
 @Composable

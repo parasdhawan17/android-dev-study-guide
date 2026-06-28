@@ -189,18 +189,24 @@ TASK 5.1 (Easy):
 Rewrite these Java-style null checks as idiomatic Kotlin:
 
 Java:
+
+```java
 String name = getName();
 int length;
 if (name != null) {
-length = name.length();
+    length = name.length();
 } else {
-length = 0;
+    length = 0;
 }
+```
 
 Do it in ONE line using null safety operators.
 
 YOUR SOLUTION:
+
+```kotlin
 val length = ...
+```
 
 TASK 5.2 (Medium):
 Write a function fetchUserData(userId: String?): Result&lt;User&gt; that:
@@ -215,7 +221,10 @@ data class User2(val id: String, val name: String)
 ````
 
 YOUR SOLUTION:
+
+```kotlin
 fun fetchUserData(userId: String?): Result&lt;User2&gt; { ... }
+```
 
 TASK 5.3 (Hard):
 You're given a deeply nested data structure. Safely access the user's
@@ -277,6 +286,7 @@ SOLUTIONS
 
 Uncomment to see solutions after attempting yourself
 
+```kotlin
 // ─────────────────────────────────────────────────────────────────────────────
 // SOLUTION 1.3: Remove duplicate users
 fun removeDuplicateUsers(users: List&lt;User&gt;): List&lt;User&gt; {
@@ -315,6 +325,7 @@ return company?.department?.team?.member?.profile?.avatarUrl ?: ""
 }
 // Or with safe let:
 // return company?.let { c -&gt; c.department?.let { d -&gt; ... } } ?: ""
+```
 
 ````kotlin
 fun main() {

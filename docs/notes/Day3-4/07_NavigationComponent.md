@@ -17,66 +17,72 @@ BUILD.GRADLE SETUP
 
 build.gradle (app level):
 
+```groovy
 plugins {
-id 'androidx.navigation.safeargs.kotlin'
+    id 'androidx.navigation.safeargs.kotlin'
 }
 
 dependencies {
-implementation "androidx.navigation:navigation-fragment-ktx:2.7.0"
-implementation "androidx.navigation:navigation-ui-ktx:2.7.0"
-// For Compose
-implementation "androidx.navigation:navigation-compose:2.7.0"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.7.0"
+    implementation "androidx.navigation:navigation-ui-ktx:2.7.0"
+    // For Compose
+    implementation "androidx.navigation:navigation-compose:2.7.0"
 }
+```
 
 NAVIGATION GRAPH (XML)
 
 File: res/navigation/nav_graph.xml
 
-&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;navigation xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:app="http://schemas.android.com/apk/res-auto"
-android:id="@+id/nav_graph"
-app:startDestination="@id/homeFragment"&gt;
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
 
-&lt;fragment
-android:id="@+id/homeFragment"
-android:name="com.example.HomeFragment"
-android:label="Home"&gt;
-&lt;action
-android:id="@+id/action_home_to_detail"
-app:destination="@id/detailFragment" /&gt;
-&lt;/fragment&gt;
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_home_to_detail"
+            app:destination="@id/detailFragment" />
+    </fragment>
 
-&lt;fragment
-android:id="@+id/detailFragment"
-android:name="com.example.DetailFragment"
-android:label="Detail"&gt;
-&lt;argument
-android:name="itemId"
-app:argType="string"
-app:nullable="false" /&gt;
-&lt;/fragment&gt;
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="com.example.DetailFragment"
+        android:label="Detail">
+        <argument
+            android:name="itemId"
+            app:argType="string"
+            app:nullable="false" />
+    </fragment>
 
-&lt;/navigation&gt;
+</navigation>
+```
 
 NAV HOST SETUP (Activity Layout)
 
 File: res/layout/activity_main.xml
 
-&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;androidx.constraintlayout.widget.ConstraintLayout
-android:layout_width="match_parent"
-android:layout_height="match_parent"&gt;
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-&lt;androidx.fragment.app.FragmentContainerView
-android:id="@+id/nav_host_fragment"
-android:name="androidx.navigation.fragment.NavHostFragment"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-app:defaultNavHost="true"
-app:navGraph="@navigation/nav_graph" /&gt;
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph" />
 
-&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
 
 ## 2. Basic Navigation In Code
 
@@ -384,21 +390,23 @@ BOTTOM NAVIGATION MENU
 
 File: res/menu/bottom_nav_menu.xml
 
-&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;menu xmlns:android="http://schemas.android.com/apk/res/android"&gt;
-&lt;item
-android:id="@+id/homeFragment"
-android:icon="@drawable/ic_home"
-android:title="Home" /&gt;
-&lt;item
-android:id="@+id/searchFragment"
-android:icon="@drawable/ic_search"
-android:title="Search" /&gt;
-&lt;item
-android:id="@+id/profileFragment"
-android:icon="@drawable/ic_profile"
-android:title="Profile" /&gt;
-&lt;/menu&gt;
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+    <item
+        android:id="@+id/searchFragment"
+        android:icon="@drawable/ic_search"
+        android:title="Search" />
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile" />
+</menu>
+```
 
 Menu item IDs MUST match navigation graph destination IDs!
 
@@ -406,24 +414,26 @@ Menu item IDs MUST match navigation graph destination IDs!
 
 NAV GRAPH WITH DEEP LINKS
 
-&lt;fragment
-android:id="@+id/productDetailFragment"
-android:name="com.example.ProductDetailFragment"&gt;
+```xml
+<fragment
+    android:id="@+id/productDetailFragment"
+    android:name="com.example.ProductDetailFragment">
 
-&lt;argument
-android:name="productId"
-app:argType="string" /&gt;
+    <argument
+        android:name="productId"
+        app:argType="string" />
 
-&lt;!-- Implicit Deep Link --&gt;
-&lt;deepLink
-android:id="@+id/deepLink"
-app:uri="myapp://product/{productId}" /&gt;
+    <!-- Implicit Deep Link -->
+    <deepLink
+        android:id="@+id/deepLink"
+        app:uri="myapp://product/{productId}" />
 
-&lt;!-- Multiple deep links --&gt;
-&lt;deepLink
-app:uri="https://www.myapp.com/product/{productId}" /&gt;
+    <!-- Multiple deep links -->
+    <deepLink
+        app:uri="https://www.myapp.com/product/{productId}" />
 
-&lt;/fragment&gt;
+</fragment>
+```
 
 ````kotlin
 class DeepLinkHandling : AppCompatActivity() {
@@ -478,50 +488,52 @@ class DeepLinkHandling : AppCompatActivity() {
 
 NESTED NAVIGATION GRAPH STRUCTURE
 
-&lt;navigation xmlns:app="http://schemas.android.com/apk/res-auto"
-android:id="@+id/nav_graph"
-app:startDestination="@id/home_graph"&gt;
+```xml
+<navigation xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/home_graph">
 
-&lt;!-- Nested Home Graph --&gt;
-&lt;navigation
-android:id="@+id/home_graph"
-app:startDestination="@id/dashboardFragment"
-app:moduleName="home_feature"&gt;
+    <!-- Nested Home Graph -->
+    <navigation
+        android:id="@+id/home_graph"
+        app:startDestination="@id/dashboardFragment"
+        app:moduleName="home_feature">
 
-&lt;fragment
-android:id="@+id/dashboardFragment"
-android:name="com.example.DashboardFragment"&gt;
-&lt;action
-android:id="@+id/action_dashboard_to_notifications"
-app:destination="@id/notificationsFragment" /&gt;
-&lt;/fragment&gt;
+        <fragment
+            android:id="@+id/dashboardFragment"
+            android:name="com.example.DashboardFragment">
+            <action
+                android:id="@+id/action_dashboard_to_notifications"
+                app:destination="@id/notificationsFragment" />
+        </fragment>
 
-&lt;fragment
-android:id="@+id/notificationsFragment"
-android:name="com.example.NotificationsFragment" /&gt;
+        <fragment
+            android:id="@+id/notificationsFragment"
+            android:name="com.example.NotificationsFragment" />
 
-&lt;/navigation&gt;
+    </navigation>
 
-&lt;!-- Nested Profile Graph --&gt;
-&lt;navigation
-android:id="@+id/profile_graph"
-app:startDestination="@id/profileFragment"&gt;
+    <!-- Nested Profile Graph -->
+    <navigation
+        android:id="@+id/profile_graph"
+        app:startDestination="@id/profileFragment">
 
-&lt;fragment
-android:id="@+id/profileFragment"
-android:name="com.example.ProfileFragment"&gt;
-&lt;action
-android:id="@+id/action_profile_to_settings"
-app:destination="@id/settingsFragment" /&gt;
-&lt;/fragment&gt;
+        <fragment
+            android:id="@+id/profileFragment"
+            android:name="com.example.ProfileFragment">
+            <action
+                android:id="@+id/action_profile_to_settings"
+                app:destination="@id/settingsFragment" />
+        </fragment>
 
-&lt;fragment
-android:id="@+id/settingsFragment"
-android:name="com.example.SettingsFragment" /&gt;
+        <fragment
+            android:id="@+id/settingsFragment"
+            android:name="com.example.SettingsFragment" />
 
-&lt;/navigation&gt;
+    </navigation>
 
-&lt;/navigation&gt;
+</navigation>
+```
 
 ````kotlin
 class NestedNavigation : Fragment() {

@@ -299,37 +299,39 @@ class MergeWorker(context: Context, params: WorkerParameters) :
 
 In ViewModel or Activity:
 
+```kotlin
 class UploadViewModel(application: Application) : AndroidViewModel(application) {
 
-fun uploadFile(fileUri: String): LiveData&lt;WorkInfo&gt; {
-val uploadWork = OneTimeWorkRequestBuilder&lt;UploadWorker&gt;()
-.setInputData(workDataOf("file" to fileUri))
-.build()
+    fun uploadFile(fileUri: String): LiveData<WorkInfo> {
+        val uploadWork = OneTimeWorkRequestBuilder<UploadWorker>()
+            .setInputData(workDataOf("file" to fileUri))
+            .build()
 
-WorkManager.getInstance(getApplication()).enqueue(uploadWork)
+        WorkManager.getInstance(getApplication()).enqueue(uploadWork)
 
-return WorkManager.getInstance(getApplication())
-.getWorkInfoByIdLiveData(uploadWork.id)
-}
+        return WorkManager.getInstance(getApplication())
+            .getWorkInfoByIdLiveData(uploadWork.id)
+    }
 }
 
 // In Compose:
 @Composable
 fun UploadProgress(workId: UUID) {
-val workInfo by WorkManager.getInstance(LocalContext.current)
-.getWorkInfoByIdLiveData(workId)
-.observeAsState()
+    val workInfo by WorkManager.getInstance(LocalContext.current)
+        .getWorkInfoByIdLiveData(workId)
+        .observeAsState()
 
-when (workInfo?.state) {
-WorkInfo.State.ENQUEUED -&gt; Text("Waiting...")
-WorkInfo.State.RUNNING -&gt; CircularProgressIndicator()
-WorkInfo.State.SUCCEEDED -&gt; Text("Complete!")
-WorkInfo.State.FAILED -&gt; Text("Failed")
-WorkInfo.State.BLOCKED -&gt; Text("Waiting for constraints...")
-WorkInfo.State.CANCELLED -&gt; Text("Cancelled")
-null -&gt; Text("Not started")
+    when (workInfo?.state) {
+        WorkInfo.State.ENQUEUED -> Text("Waiting...")
+        WorkInfo.State.RUNNING -> CircularProgressIndicator()
+        WorkInfo.State.SUCCEEDED -> Text("Complete!")
+        WorkInfo.State.FAILED -> Text("Failed")
+        WorkInfo.State.BLOCKED -> Text("Waiting for constraints...")
+        WorkInfo.State.CANCELLED -> Text("Cancelled")
+        null -> Text("Not started")
+    }
 }
-}
+```
 
 ## 8. Foreground Services
 
@@ -473,10 +475,12 @@ New requirements for Foreground Services:
 
 1. Must declare foregroundServiceType in manifest:
 
-&lt;service
-android:name=".MusicPlaybackService"
-android:foregroundServiceType="mediaPlayback"
-android:exported="false" /&gt;
+```xml
+<service
+    android:name=".MusicPlaybackService"
+    android:foregroundServiceType="mediaPlayback"
+    android:exported="false" />
+```
 
 Types available:
 - camera, connectedDevice, dataSync, location, mediaPlayback
@@ -599,32 +603,41 @@ class ProgressUploadWorker(context: Context, params: WorkerParameters) :
 
 ## 12. Testing Workmanager
 
-// Enable testing init provider in AndroidManifest.xml:
-&lt;provider
-android:name="androidx.work.impl.WorkManagerInitializer"
-android:authorities="${applicationId}.workmanager-init"
-tools:node="remove" /&gt;
+Enable testing init provider in AndroidManifest.xml:
 
-// In Application.onCreate():
+```xml
+<provider
+    android:name="androidx.work.impl.WorkManagerInitializer"
+    android:authorities="${applicationId}.workmanager-init"
+    tools:node="remove" />
+```
+
+In `Application.onCreate()`:
+
+```kotlin
 val config = Configuration.Builder()
-.setMinimumLoggingLevel(android.util.Log.DEBUG)
-.setExecutor(SynchronousExecutor()) // For tests
-.build()
+    .setMinimumLoggingLevel(android.util.Log.DEBUG)
+    .setExecutor(SynchronousExecutor()) // For tests
+    .build()
 
 WorkManager.initialize(this, config)
+```
 
-// Test:
+Test:
+
+```kotlin
 @Test
 fun testUploadWorker() {
-val worker = TestListenableWorkerBuilder&lt;UploadWorker&gt;(context)
-.setInputData(workDataOf("file" to "test.txt"))
-.build()
+    val worker = TestListenableWorkerBuilder<UploadWorker>(context)
+        .setInputData(workDataOf("file" to "test.txt"))
+        .build()
 
-runBlocking {
-val result = worker.doWork()
-assertThat(result).isEqualTo(Result.success())
+    runBlocking {
+        val result = worker.doWork()
+        assertThat(result).isEqualTo(Result.success())
+    }
 }
-}
+```
 
 ## Interview Questions
 

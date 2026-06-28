@@ -53,15 +53,17 @@ WHY ANONYMOUS INNER CLASSES CAUSE LEAKS:
 In Java/Kotlin, non-static inner classes (including anonymous ones) implicitly
 hold a reference to their enclosing class. This is compiler-generated:
 
+```kotlin
 // What you write:
 object : Runnable { override fun run() { updateUI() } }
 
 // What compiler generates (conceptually):
 class AnonymousRunnable$1(val this$0: MemoryLeakScenario1) : Runnable {
-override fun run() {
-this$0.updateUI()  // Implicit reference!
+    override fun run() {
+        this$0.updateUI()  // Implicit reference!
+    }
 }
-}
+```
 
 STATIC vs NON-STATIC INNER CLASS:
 
