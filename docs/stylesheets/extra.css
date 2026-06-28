@@ -1,0 +1,84 @@
+/* Presentation-only polish for the study site. */
+:root {
+  --study-card-border: rgba(85, 103, 255, 0.18);
+  --study-card-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.md-typeset .hero {
+  border: 1px solid var(--study-card-border);
+  border-radius: 1.25rem;
+  padding: 2rem;
+  margin: 1rem 0 2rem;
+  background:
+    radial-gradient(circle at top left, rgba(83, 109, 254, 0.18), transparent 34rem),
+    linear-gradient(135deg, rgba(83, 109, 254, 0.08), rgba(0, 200, 150, 0.08));
+}
+
+.md-typeset .hero h1 {
+  max-width: 900px;
+  margin: 0.2rem 0 0.7rem;
+  font-weight: 800;
+}
+
+.md-typeset .hero p {
+  max-width: 760px;
+}
+
+.md-typeset .eyebrow {
+  margin: 0;
+  color: var(--md-primary-fg-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.md-typeset .study-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
+
+.md-typeset .study-card {
+  display: block;
+  min-height: 8rem;
+  padding: 1.1rem;
+  border: 1px solid var(--study-card-border);
+  border-radius: 1rem;
+  background: var(--md-default-bg-color);
+  box-shadow: var(--study-card-shadow);
+  color: var(--md-default-fg-color);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.md-typeset .study-card:hover {
+  border-color: var(--md-primary-fg-color);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+}
+
+.md-typeset .study-card span,
+.md-typeset .study-card strong,
+.md-typeset .study-card small {
+  display: block;
+}
+
+.md-typeset .study-card span {
+  color: var(--md-primary-fg-color);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.md-typeset .study-card strong {
+  margin: 0.35rem 0;
+  font-size: 1.2rem;
+}
+
+.md-typeset .study-card small {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset pre > code {
+  border-radius: 0.6rem;
+}

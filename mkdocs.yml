@@ -1,0 +1,111 @@
+site_name: Android Study Notes
+site_description: Android technical interview study notes
+theme:
+  name: material
+  icon:
+    logo: material/android
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+extra_css:
+  - stylesheets/extra.css
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  - Notes:
+      - 'Day 1-2':
+          - 'Cheat Sheet': 'notes/Day1-2/CheatSheet.md'
+          - 'Data Classes': 'notes/Day1-2/01_DataClasses.md'
+          - 'Sealed Classes': 'notes/Day1-2/02_SealedClasses.md'
+          - 'Extension Functions': 'notes/Day1-2/03_ExtensionFunctions.md'
+          - 'Higher Order Functions': 'notes/Day1-2/04_HigherOrderFunctions.md'
+          - 'Null Safety': 'notes/Day1-2/05_NullSafety.md'
+          - 'Generics Variance': 'notes/Day1-2/06_GenericsVariance.md'
+          - 'Practice Exercises': 'notes/Day1-2/PracticeExercises.md'
+      - 'Day 3-4':
+          - 'Cheat Sheet': 'notes/Day3-4/CheatSheet.md'
+          - 'Activity Lifecycle': 'notes/Day3-4/01_ActivityLifecycle.md'
+          - 'Fragment Lifecycle': 'notes/Day3-4/02_FragmentLifecycle.md'
+          - 'Lifecycle Components': 'notes/Day3-4/03_LifecycleComponents.md'
+          - 'View Model Lifecycle': 'notes/Day3-4/04_ViewModelLifecycle.md'
+          - 'Memory Leaks And Process Death': 'notes/Day3-4/05_MemoryLeaksAndProcessDeath.md'
+          - 'Practice Exercises': 'notes/Day3-4/06_PracticeExercises.md'
+          - 'Navigation Component': 'notes/Day3-4/07_NavigationComponent.md'
+      - 'Day 5-7':
+          - 'Cheat Sheet': 'notes/Day5-7/CheatSheet.md'
+          - 'Compose Lifecycle': 'notes/Day5-7/01_ComposeLifecycle.md'
+          - 'Compose Vs Views': 'notes/Day5-7/02_ComposeVsViews.md'
+          - 'Background Execution': 'notes/Day5-7/03_BackgroundExecution.md'
+          - 'Saved State And Process Death': 'notes/Day5-7/04_SavedStateAndProcessDeath.md'
+          - 'Practice Exercises': 'notes/Day5-7/05_PracticeExercises.md'
+      - 'Day 8-14':
+          - 'Cheat Sheet': 'notes/Day8-14/CheatSheet.md'
+          - 'Coroutines Fundamentals': 'notes/Day8-14/01_CoroutinesFundamentals.md'
+          - 'Flow And Reactive State': 'notes/Day8-14/02_FlowAndReactiveState.md'
+          - 'Thread Safety And Synchronization': 'notes/Day8-14/03_ThreadSafetyAndSynchronization.md'
+          - 'Android Threading': 'notes/Day8-14/04_AndroidThreading.md'
+          - 'Practice Exercises': 'notes/Day8-14/05_PracticeExercises.md'
+      - 'Day 15-21':
+          - 'Cheat Sheet': 'notes/Day15-21/CheatSheet.md'
+          - 'MVVM': 'notes/Day15-21/01_MVVM.md'
+          - 'MVI': 'notes/Day15-21/02_MVI.md'
+          - 'Clean Architecture': 'notes/Day15-21/03_CleanArchitecture.md'
+          - 'Dependency Injection': 'notes/Day15-21/04_DependencyInjection.md'
+          - 'Practice Exercises': 'notes/Day15-21/05_PracticeExercises.md'
+      - 'Day 22-28':
+          - 'Cheat Sheet': 'notes/Day22-28/CheatSheet.md'
+          - 'Unit Testing Fundamentals': 'notes/Day22-28/01_UnitTestingFundamentals.md'
+          - 'View Model And Coroutine Testing': 'notes/Day22-28/02_ViewModelAndCoroutineTesting.md'
+          - 'Use Case And Repository Testing': 'notes/Day22-28/03_UseCaseAndRepositoryTesting.md'
+          - 'Testable Code Design': 'notes/Day22-28/04_TestableCodeDesign.md'
+          - 'Practice Exercises': 'notes/Day22-28/05_PracticeExercises.md'
+      - 'Day 29-34':
+          - 'Cheat Sheet': 'notes/Day29-34/CheatSheet.md'
+          - 'Recycler View Performance': 'notes/Day29-34/01_RecyclerViewPerformance.md'
+          - 'Layout Performance': 'notes/Day29-34/02_LayoutPerformance.md'
+          - 'Memory And Profiling': 'notes/Day29-34/03_MemoryAndProfiling.md'
+          - 'Startup Jank ANR': 'notes/Day29-34/04_StartupJankANR.md'
+          - 'Practice Exercises': 'notes/Day29-34/05_PracticeExercises.md'
+      - 'Day 35-42':
+          - 'Cheat Sheet': 'notes/Day35-42/CheatSheet.md'
+          - 'Debugging Techniques': 'notes/Day35-42/01_DebuggingTechniques.md'
+          - 'Edge Cases And Error Handling': 'notes/Day35-42/02_EdgeCasesAndErrorHandling.md'
+          - 'Coding Interview Patterns': 'notes/Day35-42/03_CodingInterviewPatterns.md'
+          - 'Final Mock Interview Prep': 'notes/Day35-42/04_FinalMockInterviewPrep.md'
+          - 'Practice Exercises': 'notes/Day35-42/05_PracticeExercises.md'
