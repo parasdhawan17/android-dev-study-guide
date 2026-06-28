@@ -10,16 +10,10 @@ Dependency Injection means a class receives its dependencies from the outside in
 constructing them internally.
 
 Bad:
-
-```kotlin
 class ViewModel { val repo = RealRepository(RetrofitApi()) }
-```
 
 Good:
-
-```kotlin
 class ViewModel(private val repo: Repository)
-```
 
 Benefits:
 - Easier testing: pass fake repository.
@@ -69,46 +63,42 @@ Scopes:
 - @ActivityRetainedScoped: survives config change, tied to activity retained graph.
 - @ViewModelScoped: one per ViewModel.
 
-```kotlin
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+private val authRepository: AuthRepository
 ) : ViewModel()
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    @Binds
-    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+@Binds
+abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    @Provides
-    @Singleton
-    fun provideAuthApi(): AuthApi = Retrofit.Builder()
-        .baseUrl("https://api.example.com")
-        .build()
-        .create(AuthApi::class.java)
+@Provides
+@Singleton
+fun provideAuthApi(): AuthApi = Retrofit.Builder()
+.baseUrl("https://api.example.com")
+.build()
+.create(AuthApi::class.java)
 }
-```
 
 ## 4. Testing With Di
 
 DI makes tests simple because production dependencies can be replaced.
 
-```kotlin
 class FakeAuthRepository : AuthRepository {
-    override suspend fun login(email: String, password: String) = Result.success(User("1"))
+override suspend fun login(email: String, password: String) = Result.success(User("1"))
 }
 
 @Test
 fun login_success() = runTest {
-    val viewModel = LoginViewModel(FakeAuthRepository())
-    assertTrue(viewModel.login("a", "b").isSuccess)
+val viewModel = LoginViewModel(FakeAuthRepository())
+assertTrue(viewModel.login("a", "b").isSuccess)
 }
-```
 
 ## Interview Questions
 

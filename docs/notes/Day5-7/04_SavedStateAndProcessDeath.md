@@ -547,107 +547,77 @@ d. Return to app via Recents
 e. Verify state restored correctly
 
 4. Test with strict mode:
-
-```kotlin
 StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
-    .detectNonSdkApiUsage()
-    .penaltyLog()
-    .build())
-```
+.detectNonSdkApiUsage()
+.penaltyLog()
+.build())
 
 Automated test
-
-```kotlin
 @RunWith(AndroidJUnit4::class)
 class ProcessDeathTest {
 
-    @get:Rule
-    val activityRule = ActivityScenarioRule(MainActivity::class.java)
+@get:Rule
+val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
-    @Test
-    fun stateSurvivesProcessDeath() {
-        // Enter some data
-        onView(withId(R.id.searchInput))
-            .perform(typeText("kotlin"))
+@Test
+fun stateSurvivesProcessDeath() {
+// Enter some data
+onView(withId(R.id.searchInput))
+.perform(typeText("kotlin"))
 
-        // Simulate process death
-        activityRule.scenario.recreate()
+// Simulate process death
+activityRule.scenario.recreate()
 
-        // Verify state restored
-        onView(withId(R.id.searchInput))
-            .check(matches(withText("kotlin")))
-    }
+// Verify state restored
+onView(withId(R.id.searchInput))
+.check(matches(withText("kotlin")))
 }
-```
+}
 
 ## 9. Common Pitfalls
 
 PITFALL 1: Not handling null savedInstanceState
 WRONG:
-
-```kotlin
 override fun onCreate(savedInstanceState: Bundle) {
-    val value = savedInstanceState.getString("key") // NPE if null!
+val value = savedInstanceState.getString("key") // NPE if null!
 }
-```
 
 RIGHT:
-
-```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
-    val value = savedInstanceState?.getString("key") // Safe call
+val value = savedInstanceState?.getString("key") // Safe call
 }
-```
 
 PITFALL 2: Saving large objects
 WRONG:
-
-```kotlin
 outState.putSerializable("large_list", hugeList) // Can exceed 1MB
-```
 
 RIGHT:
-
-```kotlin
 outState.putStringArrayList("ids", ArrayList(itemIds)) // Save IDs only
-```
 
 PITFALL 3: Forgetting to call super
 WRONG:
-
-```kotlin
 override fun onSaveInstanceState(outState: Bundle) {
-    outState.putString("key", value)
-    // Missing super call!
+outState.putString("key", value)
+// Missing super call!
 }
-```
 
 RIGHT:
-
-```kotlin
 override fun onSaveInstanceState(outState: Bundle) {
-    super.onSaveInstanceState(outState) // Always call first
-    outState.putString("key", value)
+super.onSaveInstanceState(outState) // Always call first
+outState.putString("key", value)
 }
-```
 
 PITFALL 4: Assuming onSaveInstanceState always called
 WRONG:
-
-```kotlin
 fun criticalSave() {
-    // Expecting this data to always be saved
+// Expecting this data to always be saved
 }
-```
 
 RIGHT:
-
-```kotlin
 fun criticalSave() {
-    // Persist to disk/database for critical data
-    // Use SavedStateHandle only for UI state
+// Persist to disk/database for critical data
+// Use SavedStateHandle only for UI state
 }
-```
 
 ## Interview Questions
 

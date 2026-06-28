@@ -24,6 +24,7 @@
  *
  * build.gradle (app level):
  *
+ * ```groovy
  * plugins {
  *     id 'androidx.navigation.safeargs.kotlin'
  * }
@@ -34,6 +35,7 @@
  *     // For Compose
  *     implementation "androidx.navigation:navigation-compose:2.7.0"
  * }
+ * ```
  */
 
 /**
@@ -42,6 +44,7 @@
  *
  * File: res/navigation/nav_graph.xml
  *
+ * ```xml
  * <?xml version="1.0" encoding="utf-8"?>
  * <navigation xmlns:android="http://schemas.android.com/apk/res/android"
  *     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -68,6 +71,7 @@
  *     </fragment>
  *
  * </navigation>
+ * ```
  */
 
 /**
@@ -76,6 +80,7 @@
  *
  * File: res/layout/activity_main.xml
  *
+ * ```xml
  * <?xml version="1.0" encoding="utf-8"?>
  * <androidx.constraintlayout.widget.ConstraintLayout
  *     android:layout_width="match_parent"
@@ -90,6 +95,7 @@
  *         app:navGraph="@navigation/nav_graph" />
  *
  * </androidx.constraintlayout.widget.ConstraintLayout>
+ * ```
  */
 
 // ============================================================================
@@ -400,6 +406,7 @@ class BottomNavigationSetup : AppCompatActivity() {
  *
  * File: res/menu/bottom_nav_menu.xml
  *
+ * ```xml
  * <?xml version="1.0" encoding="utf-8"?>
  * <menu xmlns:android="http://schemas.android.com/apk/res/android">
  *     <item
@@ -415,6 +422,7 @@ class BottomNavigationSetup : AppCompatActivity() {
  *         android:icon="@drawable/ic_profile"
  *         android:title="Profile" />
  * </menu>
+ * ```
  *
  * Menu item IDs MUST match navigation graph destination IDs!
  */
@@ -427,6 +435,7 @@ class BottomNavigationSetup : AppCompatActivity() {
  * NAV GRAPH WITH DEEP LINKS
  * ==========================
  *
+ * ```xml
  * <fragment
  *     android:id="@+id/productDetailFragment"
  *     android:name="com.example.ProductDetailFragment">
@@ -445,6 +454,7 @@ class BottomNavigationSetup : AppCompatActivity() {
  *         app:uri="https://www.myapp.com/product/{productId}" />
  *
  * </fragment>
+ * ```
  */
 
 class DeepLinkHandling : AppCompatActivity() {
@@ -453,6 +463,7 @@ class DeepLinkHandling : AppCompatActivity() {
      * MANIFEST CONFIGURATION FOR DEEP LINKS
      * ======================================
      *
+     * ```xml
  * <activity
  *     android:name=".MainActivity"
  *     android:exported="true">
@@ -465,6 +476,7 @@ class DeepLinkHandling : AppCompatActivity() {
  *     </intent-filter>
  *     <nav-graph android:value="@navigation/nav_graph" />
  * </activity>
+     * ```
  */
 
     /**
@@ -502,6 +514,7 @@ class DeepLinkHandling : AppCompatActivity() {
  * NESTED NAVIGATION GRAPH STRUCTURE
  * ==================================
  *
+ * ```xml
  * <navigation xmlns:app="http://schemas.android.com/apk/res-auto"
  *     android:id="@+id/nav_graph"
  *     app:startDestination="@id/home_graph">
@@ -546,6 +559,7 @@ class DeepLinkHandling : AppCompatActivity() {
  *     </navigation>
  *
  * </navigation>
+ * ```
  */
 
 class NestedNavigation : Fragment() {

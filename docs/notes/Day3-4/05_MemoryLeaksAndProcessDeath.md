@@ -24,63 +24,61 @@ destroyed, the Runnable keeps it alive until the Runnable executes.
 
 MEMORY REFERENCE CHAIN (Leaky Scenario):
 
-Handler (Main Looper)
-│
-├─ Message Queue
-│      │
-│      └─ Message (delayed 60s)
-│             │
-│             └─ Runnable ──► Outer Activity (MemoryLeakScenario1)
-│                                  │
-│                                  ├─ Views
-│                                  ├─ Resources
-│                                  └─ (Entire Activity hierarchy)
-│
-[User leaves Activity, onDestroy() called]
-│
-▼
-GC tries to collect Activity... BUT!
-│
-▼
-Runnable still in MessageQueue ──► Runnable holds Activity ref
-│                                  │
-▼                                  ▼
-Activity CANNOT be garbage collected!!!
-(Memory Leak for 60+ seconds)
+    Handler (Main Looper)
+         │
+         ├─ Message Queue
+         │      │
+         │      └─ Message (delayed 60s)
+         │             │
+         │             └─ Runnable ──► Outer Activity (MemoryLeakScenario1)
+         │                                  │
+         │                                  ├─ Views
+         │                                  ├─ Resources
+         │                                  └─ (Entire Activity hierarchy)
+         │
+    [User leaves Activity, onDestroy() called]
+         │
+         ▼
+    GC tries to collect Activity... BUT!
+         │
+         ▼
+    Runnable still in MessageQueue ──► Runnable holds Activity ref
+         │                                  │
+         ▼                                  ▼
+    Activity CANNOT be garbage collected!!!
+    (Memory Leak for 60+ seconds)
 
 WHY ANONYMOUS INNER CLASSES CAUSE LEAKS:
 
 In Java/Kotlin, non-static inner classes (including anonymous ones) implicitly
 hold a reference to their enclosing class. This is compiler-generated:
 
-```kotlin
-// What you write:
-object : Runnable { override fun run() { updateUI() } }
+    // What you write:
+    object : Runnable { override fun run() { updateUI() } }
 
-// What compiler generates (conceptually):
-class AnonymousRunnable$1(val this$0: MemoryLeakScenario1) : Runnable {
-    override fun run() {
-        this$0.updateUI()  // Implicit reference!
+    // What compiler generates (conceptually):
+    class AnonymousRunnable$1(val this$0: MemoryLeakScenario1) : Runnable {
+        override fun run() {
+            this$0.updateUI()  // Implicit reference!
+        }
     }
-}
-```
 
 STATIC vs NON-STATIC INNER CLASS:
 
-┌─────────────────────────────────────────────────────────────┐
-│  NON-STATIC (Anonymous/Inner)         STATIC (Nested)         │
-│  ─────────────────────────          ───────────────         │
-│  class Outer {                      class Outer {            │
-│      val data = "hello"                 class Nested {       │
-│      inner class Inner {  ❌            // No outer ref ✅  │
-│          fun print() =                  fun print() =        │
-│              println(data)              // Can't access      │
-│      }                                  // outer.data        │
-│  }                                  }                       │
-│                                                               │
-│  Implicit reference to Outer        No reference to Outer  │
-│  → CAN cause memory leaks           → SAFE for memory       │
-└─────────────────────────────────────────────────────────────┘
+    ┌─────────────────────────────────────────────────────────────┐
+    │  NON-STATIC (Anonymous/Inner)         STATIC (Nested)         │
+    │  ─────────────────────────          ───────────────         │
+    │  class Outer {                      class Outer {            │
+    │      val data = "hello"                 class Nested {       │
+    │      inner class Inner {  ❌            // No outer ref ✅  │
+    │          fun print() =                  fun print() =        │
+    │              println(data)              // Can't access      │
+    │      }                                  // outer.data        │
+    │  }                                  }                       │
+    │                                                               │
+    │  Implicit reference to Outer        No reference to Outer  │
+    │  → CAN cause memory leaks           → SAFE for memory       │
+    └─────────────────────────────────────────────────────────────┘
 
 WEAKREFERENCE EXPLAINED:
 
@@ -88,15 +86,15 @@ A WeakReference holds a reference to an object WITHOUT preventing it
 from being garbage collected. When GC runs, if an object is only
 reachable through WeakReferences, it gets collected.
 
-Strong Reference:    obj ──► Object (GC cannot collect)
-Weak Reference:      obj ──► Object (GC CAN collect)
-↓
-weakRef.get() returns null after GC
+    Strong Reference:    obj ──► Object (GC cannot collect)
+    Weak Reference:      obj ──► Object (GC CAN collect)
+                              ↓
+                        weakRef.get() returns null after GC
 
-Normal lifecycle:
-1. Activity alive ──► weakRef.get() returns Activity
-2. Activity destroyed ──► only weakRef points to it
-3. GC runs ──► Activity collected, weakRef.get() returns null
+    Normal lifecycle:
+    1. Activity alive ──► weakRef.get() returns Activity
+    2. Activity destroyed ──► only weakRef points to it
+    3. GC runs ──► Activity collected, weakRef.get() returns null
 
 ````kotlin
 class MemoryLeakScenario1 : AppCompatActivity() {
@@ -239,32 +237,32 @@ class MemoryLeakScenario1 : AppCompatActivity() {
 
 TIMELINE OF A MEMORY LEAK:
 
-0s: User opens Activity
-└─ Handler.postDelayed(Runnable, 60000ms)
-└─ Runnable enters MessageQueue
+    0s: User opens Activity
+        └─ Handler.postDelayed(Runnable, 60000ms)
+        └─ Runnable enters MessageQueue
 
-5s: User presses back (Activity finishing)
-└─ onPause() → onStop() → onDestroy()
-└─ Activity marked for destruction
-└─ BUT: Runnable still references Activity!
+    5s: User presses back (Activity finishing)
+        └─ onPause() → onStop() → onDestroy()
+        └─ Activity marked for destruction
+        └─ BUT: Runnable still references Activity!
 
-5s-60s: GC tries to collect Activity
-└─ Runnable in MessageQueue → Activity reachable
-└─ GC: "Cannot collect, still referenced!"
-└─ LEAK ACTIVE: Activity + Views + Resources held in memory
+    5s-60s: GC tries to collect Activity
+        └─ Runnable in MessageQueue → Activity reachable
+        └─ GC: "Cannot collect, still referenced!"
+        └─ LEAK ACTIVE: Activity + Views + Resources held in memory
 
-60s: Runnable executes
-└─ Runs updateUI() on dead Activity
-└─ CRASH? Or silently fails?
-└─ MessageQueue releases Runnable
+    60s: Runnable executes
+        └─ Runs updateUI() on dead Activity
+        └─ CRASH? Or silently fails?
+        └─ MessageQueue releases Runnable
 
-60s+: GC collects Activity
-└─ Finally! But memory was wasted for 55 seconds
+    60s+: GC collects Activity
+        └─ Finally! But memory was wasted for 55 seconds
 
 IF USER OPENS/CLOSES ACTIVITY MULTIPLE TIMES:
-Each instance leaks until its Runnable executes
-Memory usage keeps growing
-Eventually: OutOfMemoryError!
+    Each instance leaks until its Runnable executes
+    Memory usage keeps growing
+    Eventually: OutOfMemoryError!
 
 SCENARIO 2: Listener/Callback not unregistered
 
@@ -645,18 +643,18 @@ data class ProcessUiState(
 Tools for detecting memory leaks:
 
 1. LeakCanary (Library)
-- Automatically detects and reports leaks
-- Shows leak trace
-- Easy integration
+   - Automatically detects and reports leaks
+   - Shows leak trace
+   - Easy integration
 
 2. Android Studio Profiler
-- Heap dump analysis
-- Memory allocation tracking
-- Find retained objects
+   - Heap dump analysis
+   - Memory allocation tracking
+   - Find retained objects
 
 3. StrictMode (Built-in)
-- Detects accidental disk/network operations on main thread
-- Can detect some lifecycle violations
+   - Detects accidental disk/network operations on main thread
+   - Can detect some lifecycle violations
 
 ````kotlin
 class MemoryLeakDetection {

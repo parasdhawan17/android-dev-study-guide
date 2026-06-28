@@ -80,23 +80,21 @@ class GetUserUseCase(private val repository: UserRepository) {
 Parameterized tests reduce duplication for input/output pairs.
 Good for validation, formatting, parsing, edge cases.
 
-```kotlin
 @RunWith(Parameterized::class)
 class EmailValidatorParameterizedTest(
-    private val input: String,
-    private val expectedValid: Boolean
+private val input: String,
+private val expectedValid: Boolean
 ) {
-    companion object {
-        @JvmStatic
-        @Parameters
-        fun data() = listOf(
-            arrayOf("", false),
-            arrayOf("missing-at", false),
-            arrayOf("valid@test.com", true)
-        )
-    }
+companion object {
+@JvmStatic
+@Parameters
+fun data() = listOf(
+arrayOf("", false),
+arrayOf("missing-at", false),
+arrayOf("valid@test.com", true)
+)
 }
-```
+}
 
 ## 4. What To Test
 

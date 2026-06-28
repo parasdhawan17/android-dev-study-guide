@@ -12,18 +12,18 @@ Lifecycle Scope:
 - Created: First ViewModelProvider.get() call
 - Cleared: Activity.onDestroy() or Fragment.onDestroy() (when truly finishing)
 
-Activity Created
-↓
-ViewModel Created
-↓
-┌─────────────────────┐
-│   Configuration     │ ← ViewModel survives
-│    Change         │
-└─────────────────────┘
-↓
-Activity Destroyed
-↓
-ViewModel.onCleared()
+                          Activity Created
+                              ↓
+                          ViewModel Created
+                              ↓
+                   ┌─────────────────────┐
+                   │   Configuration     │ ← ViewModel survives
+                   │    Change         │
+                   └─────────────────────┘
+                              ↓
+                          Activity Destroyed
+                              ↓
+                          ViewModel.onCleared()
 
 ## Basic Viewmodel
 

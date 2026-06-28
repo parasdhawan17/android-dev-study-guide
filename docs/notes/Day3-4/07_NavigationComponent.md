@@ -442,6 +442,7 @@ class DeepLinkHandling : AppCompatActivity() {
      * MANIFEST CONFIGURATION FOR DEEP LINKS
      * ======================================
      *
+     * ```xml
  * <activity
  *     android:name=".MainActivity"
  *     android:exported="true">
@@ -454,6 +455,7 @@ class DeepLinkHandling : AppCompatActivity() {
  *     </intent-filter>
  *     <nav-graph android:value="@navigation/nav_graph" />
  * </activity>
+     * ```
  */
 
     /**
@@ -794,60 +796,60 @@ class AdvancedNavigationPatterns : Fragment() {
 
 Q: What are the benefits of Navigation Component?
 A: - Handles fragment transactions automatically
-- Type-safe argument passing with Safe Args
-- Visual navigation graph in XML
-- Deep linking support
-- Proper back stack management
-- Consistent up/back button behavior
-- Navigation UI integration (BottomNav, Drawer)
+   - Type-safe argument passing with Safe Args
+   - Visual navigation graph in XML
+   - Deep linking support
+   - Proper back stack management
+   - Consistent up/back button behavior
+   - Navigation UI integration (BottomNav, Drawer)
 
 Q: How does Navigation Component handle the back stack?
 A: - Maintains a back stack of destinations
-- Each navigate() adds to back stack (by default)
-- popBackStack() removes current and goes back
-- popUpTo in navOptions clears up to specific destination
-- popUpTo with inclusive=true also removes that destination
+   - Each navigate() adds to back stack (by default)
+   - popBackStack() removes current and goes back
+   - popUpTo in navOptions clears up to specific destination
+   - popUpTo with inclusive=true also removes that destination
 
 Q: What's the difference between navigate() and popBackStack()?
 A: - navigate() pushes new destination onto back stack
-- popBackStack() pops current, returns to previous
-- Navigate with popUpTo can simulate pop + navigate
+   - popBackStack() pops current, returns to previous
+   - Navigate with popUpTo can simulate pop + navigate
 
 Q: How do you pass data between destinations?
 A: - Safe Args: Define arguments in nav_graph, use generated Directions classes
-- Bundle: Traditional but not type-safe
-- Result API: Use SavedStateHandle for returning results
-- ViewModel: Shared ViewModel for complex data sharing
+   - Bundle: Traditional but not type-safe
+   - Result API: Use SavedStateHandle for returning results
+   - ViewModel: Shared ViewModel for complex data sharing
 
 Q: Can Navigation Component work with multiple Fragments visible?
 A: - Designed for single-destination-at-a-time (single activity pattern)
-- For master-detail, use separate FragmentContainerViews
-- Or use Navigation Rail/SlidingPaneLayout for large screens
+   - For master-detail, use separate FragmentContainerViews
+   - Or use Navigation Rail/SlidingPaneLayout for large screens
 
 Q: How does Navigation Component handle configuration changes?
 A: - Back stack is automatically saved and restored
-- ViewModels survive (scoped to NavBackStackEntry)
-- Uses FragmentManager which handles state restoration
+   - ViewModels survive (scoped to NavBackStackEntry)
+   - Uses FragmentManager which handles state restoration
 
 Q: What's a nested navigation graph?
 A: - Sub-graph within main navigation graph
-- Has own start destination
-- Encapsulates related screens (e.g., login flow)
+   - Has own start destination
+   - Encapsulates related screens (e.g., login flow)
 - Can be loaded as dynamic feature module
-* - Cleared together when popping the graph
+   * - Cleared together when popping the graph
 
 Q: How do you implement Bottom Navigation with Navigation?
 A: - Menu items with same IDs as graph destinations
-- Use BottomNavigationView.setupWithNavController()
-- Each tab is a separate back stack (with proper setup)
-- Use NavOptions to save/restore state when switching
+   - Use BottomNavigationView.setupWithNavController()
+   - Each tab is a separate back stack (with proper setup)
+   - Use NavOptions to save/restore state when switching
 
 Q: What are common Navigation Component pitfalls?
 A: - Calling navigate() multiple times rapidly (debounce needed)
-- Not using viewLifecycleOwner in Fragment with NavHost
-- Using fragmentManager directly instead of NavController
-- Passing complex objects as arguments (use IDs instead)
-- Not handling deep links properly in manifest
+   - Not using viewLifecycleOwner in Fragment with NavHost
+   - Using fragmentManager directly instead of NavController
+   - Passing complex objects as arguments (use IDs instead)
+   - Not handling deep links properly in manifest
 
 ## Mock Classes For Compilation
 

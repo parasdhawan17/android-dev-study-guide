@@ -345,8 +345,6 @@ Test 2: UI restores correctly after activity recreation
 Test 3: Background work continues after process restart
 
 Test skeleton (requires Robolectric or instrumented test)
-
-```kotlin
 @RunWith(AndroidJUnit4::class)
 class ProcessDeathTest {
 
@@ -371,11 +369,8 @@ fun activity_recreate_restoresScrollPosition() {
 // 4. Verify scroll position and query restored
 }
 }
-```
 
 WorkManager test skeleton
-
-```kotlin
 @RunWith(AndroidJUnit4::class)
 class UploadWorkerTest {
 
@@ -396,11 +391,9 @@ fun uploadWorker_networkFailure_retries() {
 // 3. Verify Result.retry() returned
 }
 }
-```
 
 ## Solution Templates (Uncomment To See Approach)
 
-```kotlin
 // EXERCISE 1 SOLUTION - AutoRetryContent:
 
 @Composable
@@ -635,8 +628,6 @@ null -&gt; UploadStatus.Pending
 }
 }
 }
-
-```
 
 Stub classes for compilation
 

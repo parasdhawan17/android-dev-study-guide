@@ -96,8 +96,9 @@ def clean_block_comment(block_lines: list[str]) -> list[str]:
             stripped = stripped[2:].strip()
         if stripped.endswith("*/"):
             stripped = stripped[:-2].rstrip()
-        if stripped.startswith("*"):
-            stripped = stripped[1:].lstrip()
+        marker = re.match(r"^\s*\*( ?)(.*)$", stripped)
+        if marker:
+            stripped = marker.group(2)
         if stripped and set(stripped) == {"="}:
             continue
         cleaned.append(stripped)
@@ -116,10 +117,16 @@ def render_text_block(lines: list[str]) -> list[str]:
     lines = trim_blank_edges(lines[:])
     if not lines:
         return []
-    escaped = [
-        line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        for line in lines
-    ]
+    escaped: list[str] = []
+    in_fence = False
+    for line in lines:
+        if line.startswith("```"):
+            escaped.append(line)
+            in_fence = not in_fence
+        elif in_fence:
+            escaped.append(line)
+        else:
+            escaped.append(line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
     return escaped + [""]
 
 

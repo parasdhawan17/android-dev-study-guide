@@ -108,14 +108,12 @@ unidirectional flow reduce complexity.
 
 Reducers are pure functions, so tests are simple.
 
-```kotlin
 @Test
 fun amountUpdated_enablesSubmitWhenRecipientExists() {
-    val initial = TransferState(recipient = "Alice")
-    val next = reduce(initial, TransferResult.AmountUpdated("100"))
-    assertTrue(next.canSubmit)
+val initial = TransferState(recipient = "Alice")
+val next = reduce(initial, TransferResult.AmountUpdated("100"))
+assertTrue(next.canSubmit)
 }
-```
 
 ## Interview Questions
 

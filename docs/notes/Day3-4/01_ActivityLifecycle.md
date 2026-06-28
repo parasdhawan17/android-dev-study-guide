@@ -7,29 +7,29 @@ ACTIVITY LIFECYCLE OVERVIEW
 
 The Activity lifecycle consists of 6 main states:
 
-onCreate()
-↓
-CREATED
-↓
-onStart()
-↓
-STARTED
-↓
-onResume()
-↓
-RESUMED (Active - user can interact)
-↓
-onPause()
-↓
-STARTED
-↓
-onStop()
-↓
-CREATED
-↓
-onDestroy()
-↓
-DESTROYED
+                   onCreate()
+                      ↓
+                  CREATED
+                      ↓
+                   onStart()
+                      ↓
+                  STARTED
+                      ↓
+                   onResume()
+                      ↓
+                  RESUMED (Active - user can interact)
+                      ↓
+                   onPause()
+                      ↓
+                  STARTED
+                      ↓
+                   onStop()
+                      ↓
+                  CREATED
+                      ↓
+                   onDestroy()
+                      ↓
+                 DESTROYED
 
 KEY STATE FLOW:
 1. Activity launched → onCreate() → onStart() → onResume()
@@ -230,10 +230,10 @@ CONFIGURATION CHANGES
 Configuration changes (rotation, language, theme) destroy and recreate Activity
 
 ORIGINAL Activity:
-onPause() → onStop() → onSaveInstanceState() → onDestroy()
+  onPause() → onStop() → onSaveInstanceState() → onDestroy()
 
 NEW Activity:
-onCreate(savedInstanceState) → onStart() → onRestoreInstanceState() → onResume()
+  onCreate(savedInstanceState) → onStart() → onRestoreInstanceState() → onResume()
 
 HANDLING OPTIONS:
 1. Let system destroy/recreate (default) - use ViewModel + SavedStateHandle

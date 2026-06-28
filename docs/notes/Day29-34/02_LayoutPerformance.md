@@ -38,7 +38,7 @@ TextView
 
 ## 3. Merge And Viewstub
 
-`<merge>` removes unnecessary parent container when including layouts.
+&lt;merge&gt; removes unnecessary parent container when including layouts.
 ViewStub lazily inflates rarely-used UI like empty states or error panels.
 
 ````kotlin

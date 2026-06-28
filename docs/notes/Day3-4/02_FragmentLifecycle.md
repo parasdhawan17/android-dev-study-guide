@@ -9,29 +9,29 @@ Fragment lifecycle is MORE COMPLEX than Activity:
 - Tied to host Activity's lifecycle
 - Has its own additional states for view creation
 
-onAttach()
-↓
-onCreate()
-↓
-onCreateView() ←──┐
-↓               │
-onViewCreated()     │
-↓               │
-onStart()           │
-↓               │
-onResume()          │
-↓               │
-(ACTIVE)            │
-↓               │
-onPause()           │
-↓               │
-onStop()            │
-↓               │
-onDestroyView() ────┘ (View destroyed, Fragment alive)
-↓
-onDestroy()
-↓
-onDetach()
+                          onAttach()
+                              ↓
+                          onCreate()
+                              ↓
+                          onCreateView() ←──┐
+                              ↓               │
+                          onViewCreated()     │
+                              ↓               │
+                          onStart()           │
+                              ↓               │
+                          onResume()          │
+                              ↓               │
+                          (ACTIVE)            │
+                              ↓               │
+                          onPause()           │
+                              ↓               │
+                          onStop()            │
+                              ↓               │
+                          onDestroyView() ────┘ (View destroyed, Fragment alive)
+                              ↓
+                          onDestroy()
+                              ↓
+                          onDetach()
 
 FRAGMENT-SPECIFIC STATES:
 - INITIALIZED: Fragment instantiated, not attached
@@ -344,14 +344,14 @@ VIEWLIFECYCLEOWNER vs LIFECYCLEOWNER
 Fragment has TWO lifecycles:
 
 1. lifecycle (Fragment lifecycle)
-- Starts: onAttach()
-- Ends: onDetach()
-- Use for: Fragment-level operations, ViewModel observation
+   - Starts: onAttach()
+   - Ends: onDetach()
+   - Use for: Fragment-level operations, ViewModel observation
 
 2. viewLifecycleOwner.lifecycle (View lifecycle)
-- Starts: onCreateView()
-- Ends: onDestroyView()
-- Use for: UI observations (LiveData, Flow for UI updates)
+   - Starts: onCreateView()
+   - Ends: onDestroyView()
+   - Use for: UI observations (LiveData, Flow for UI updates)
 
 WHY TWO LIFECYCLES?
 - Fragment can exist without view (back stack)
@@ -389,19 +389,19 @@ class ViewLifecycleExample : Fragment() {
 FRAGMENT LIFECYCLE - COMMON PITFALLS
 
 1. Memory Leak: Holding view reference after onDestroyView()
-✅ Fix: Clear binding in onDestroyView()
+   ✅ Fix: Clear binding in onDestroyView()
 
 2. IllegalStateException: Transaction after onSaveInstanceState()
-✅ Fix: Use commitAllowingStateLoss() or check isStateSaved
+   ✅ Fix: Use commitAllowingStateLoss() or check isStateSaved
 
 3. Observing LiveData after onDestroyView()
-✅ Fix: Use viewLifecycleOwner instead of 'this'
+   ✅ Fix: Use viewLifecycleOwner instead of 'this'
 
 4. ChildFragmentManager vs ParentFragmentManager confusion
-✅ Fix: Use childFragmentManager for nested fragments
+   ✅ Fix: Use childFragmentManager for nested fragments
 
 5. Not setting setReorderingAllowed(true)
-✅ Fix: Always set it for better performance
+   ✅ Fix: Always set it for better performance
 
 FRAGMENT TRANSACTION STATE SAFETY
 
