@@ -1,0 +1,180 @@
+/**
+ * DAY 8-14: Flow and Reactive Programming
+ *
+ * Goal: Learn Flow as a stream of asynchronous values and understand how it powers UI state.
+ */
+
+// ============ 1. FLOW MENTAL MODEL ============
+/*
+A Flow<T> is an asynchronous stream that emits values over time.
+
+Cold Flow:
+- Does nothing until collected.
+- Each collector runs the producer again.
+- Example: flow { emit(api.getUser()) }
+
+Hot Flow:
+- Exists independently of collectors.
+- Collectors observe the latest/current emissions.
+- Examples: StateFlow, SharedFlow.
+*/
+
+fun userFlow(userId: String): Flow<User> = flow {
+    emit(api.getUser(userId))
+}
+
+// ============ 2. STATEFLOW ============
+/*
+StateFlow is a hot stream for state.
+
+Properties:
+- Always has a current value.
+- Replays exactly one latest value to new collectors.
+- Great for screen UI state.
+- Similar purpose to LiveData, but coroutine-native.
+*/
+
+class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
+    private val _state = MutableStateFlow(LoginUiState())
+    val state: StateFlow<LoginUiState> = _state.asStateFlow()
+
+    fun login(email: String, password: String) {
+        viewModelScope.launch {
+            _state.value = LoginUiState(isLoading = true)
+            val result = authRepository.login(email, password)
+            _state.value = result.fold(
+                onSuccess = { LoginUiState(user = it) },
+                onFailure = { LoginUiState(error = it.message ?: "Login failed") }
+            )
+        }
+    }
+}
+
+// ============ 3. SHAREDFLOW ============
+/*
+SharedFlow is a hot stream for events.
+
+Use it for:
+- Snackbars
+- Navigation commands
+- One-time messages
+
+Why not StateFlow for events?
+StateFlow replays the latest value on configuration changes, which can repeat navigation or
+snackbars accidentally. SharedFlow can be configured with replay = 0.
+*/
+
+class PaymentViewModel : ViewModel() {
+    private val _events = MutableSharedFlow<PaymentEvent>()
+    val events: SharedFlow<PaymentEvent> = _events.asSharedFlow()
+
+    fun onPaymentSuccess() {
+        viewModelScope.launch {
+            _events.emit(PaymentEvent.NavigateToReceipt)
+        }
+    }
+}
+
+sealed class PaymentEvent {
+    object NavigateToReceipt : PaymentEvent()
+    data class ShowError(val message: String) : PaymentEvent()
+}
+
+// ============ 4. CORE OPERATORS ============
+/*
+map: transform each value.
+filter: keep matching values.
+combine: latest values from multiple flows.
+zip: pair emissions one-by-one.
+flatMapLatest: switch to new inner flow, cancel old one.
+catch: handle upstream exceptions.
+onStart: emit loading state before upstream starts.
+*/
+
+fun observeSearchResults(queryFlow: Flow<String>, repository: SearchRepository): Flow<SearchUiState> {
+    return queryFlow
+        .debounce(300)
+        .filter { it.length >= 2 }
+        .distinctUntilChanged()
+        .flatMapLatest { query ->
+            flow {
+                val results = repository.search(query)
+                emit(SearchUiState(results = results))
+            }.onStart {
+                emit(SearchUiState(isLoading = true))
+            }.catch { e ->
+                emit(SearchUiState(error = e.message ?: "Search failed"))
+            }
+        }
+}
+
+// ============ 5. COLLECTING IN UI ============
+/*
+Android lifecycle matters. Do not collect forever from an Activity/Fragment lifecycle.
+
+Recommended:
+- Compose: collectAsStateWithLifecycle()
+- Views: repeatOnLifecycle(Lifecycle.State.STARTED)
+
+This prevents work while UI is stopped and avoids leaks.
+*/
+
+class FeedFragment : Fragment() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    render(state)
+                }
+            }
+        }
+    }
+}
+
+// ============ 6. BACKPRESSURE AND CONFLATION ============
+/*
+If producer is faster than consumer:
+- buffer(): allow producer to get ahead up to buffer size.
+- conflate(): keep only latest value, skip intermediate values.
+- collectLatest(): cancel previous collector block when new value arrives.
+
+UI search often wants collectLatest/flatMapLatest.
+Progress rendering might use conflate.
+*/
+
+suspend fun renderProgress(progressFlow: Flow<Int>) {
+    progressFlow
+        .conflate()
+        .collect { progress -> renderProgressBar(progress) }
+}
+
+// ============ INTERVIEW QUESTIONS ============
+/*
+Q: Flow vs LiveData?
+A: Flow is coroutine-native, supports rich operators, has cold and hot variants, and is not
+   lifecycle-aware by default. LiveData is lifecycle-aware by default but less expressive.
+
+Q: StateFlow vs SharedFlow?
+A: StateFlow is for state and always has a value. SharedFlow is for events or broadcasts and
+   can be configured with replay/buffer behavior.
+
+Q: What does flatMapLatest do?
+A: It starts a new inner flow for each upstream value and cancels the previous one. Useful for
+   search because old network calls become irrelevant when the query changes.
+*/
+
+// Stubs
+data class User(val id: String)
+data class LoginUiState(val user: User? = null, val isLoading: Boolean = false, val error: String? = null)
+data class SearchUiState(val results: List<String> = emptyList(), val isLoading: Boolean = false, val error: String? = null)
+interface AuthRepository { suspend fun login(email: String, password: String): Result<User> }
+interface SearchRepository { suspend fun search(query: String): List<String> }
+object api { suspend fun getUser(id: String) = User(id) }
+open class ViewModel { val viewModelScope = CoroutineScope(Dispatchers.Main) }
+open class Fragment { lateinit var viewLifecycleOwner: LifecycleOwner; lateinit var viewModel: FeedViewModel; fun render(state: Any) {} }
+class View
+class Bundle
+class LifecycleOwner { val lifecycle = Lifecycle(); val lifecycleScope = CoroutineScope(Dispatchers.Main) }
+class Lifecycle { enum class State { STARTED } }
+class FeedViewModel { val state: Flow<Any> = flowOf(Unit) }
+fun renderProgressBar(progress: Int) {}
