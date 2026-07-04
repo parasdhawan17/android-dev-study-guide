@@ -34,9 +34,6 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Generate docs from notes
-        run: python scripts/generate_mkdocs_docs.py
-
       - name: Build site
         run: mkdocs build --strict
 

@@ -109,3 +109,5 @@ nav:
           - 'Coding Interview Patterns': 'notes/Day35-42/03_CodingInterviewPatterns.md'
           - 'Final Mock Interview Prep': 'notes/Day35-42/04_FinalMockInterviewPrep.md'
           - 'Practice Exercises': 'notes/Day35-42/05_PracticeExercises.md'
+      - 'Misc':
+          - 'Parcelable And Serializable': 'notes/misc/01_ParcelableAndSerializable.md'
