@@ -171,23 +171,13 @@ fun ItemList(items: List<Item>, filter: String) {
 
 ## 6. Effect Handler Comparison
 
-┌─────────────────────┬──────────────────┬──────────────────┬─────────────────┐
-│ Effect              │ Runs When        │ Cleanup          │ Use Case        │
-├─────────────────────┼──────────────────┼──────────────────┼─────────────────┤
-│ LaunchedEffect      │ Key change       │ Auto-cancels     │ API calls,      │
-│                     │                  │ coroutine scope  │ one-shot ops    │
-├─────────────────────┼──────────────────┼──────────────────┼─────────────────┤
-│ DisposableEffect    │ Key change       │ onDispose block  │ Listeners,      │
-│                     │                  │                  │ callbacks       │
-├─────────────────────┼──────────────────┼──────────────────┼─────────────────┤
-│ SideEffect          │ Every recomp     │ None             │ Analytics,      │
-│                     │                  │                  │ external sync   │
-├─────────────────────┼──────────────────┼──────────────────┼─────────────────┤
-│ remember            │ Once (per comp)  │ None             │ Cache values    │
-├─────────────────────┼──────────────────┼──────────────────┼─────────────────┤
-│ rememberSaveable    │ Once (per comp)  │ None             │ Survives        │
-│                     │                  │                  │ process death   │
-└─────────────────────┴──────────────────┴──────────────────┴─────────────────┘
+| Effect | Runs When | Cleanup | Use Case |
+|--------|-----------|---------|----------|
+| `LaunchedEffect` | Key changes | Auto-cancel coroutine | API calls, one-shot operations |
+| `DisposableEffect` | Key changes | `onDispose` block | Listeners, callbacks, resources |
+| `SideEffect` | Every recomposition | None | Analytics, external sync |
+| `remember` | Once (per composition) | None | Cache values |
+| `rememberSaveable` | Once (restored) | None | Survives process death |
 
 ## 7. Viewmodel In Compose
 
@@ -260,6 +250,68 @@ CONFIGURATION CHANGE (Activity recreated):
 ├─ rememberSaveable restored from Bundle
 ├─ ViewModel retained (survives)
 └─ DisposableEffect/LaunchedEffect: restart if keys changed
+
+## Effect Timing Visual Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant LC as Leaving Composition
+    participant IC as Initial Composition
+    participant RC as Recomposition
+
+    Note over IC: 1. Initial Composition Starts
+    IC->>IC: remember/rememberSaveable initialized
+    IC->>IC: DisposableEffect enters (runs)
+    IC->>IC: LaunchedEffect launches coroutine
+    IC->>IC: Composition completes successfully
+    IC->>RC: SideEffect runs (1st time!)
+
+    Note over RC: 2. Recomposition (state change)
+    RC->>RC: remember values retained
+    alt Keys changed
+        RC->>LC: DisposableEffect: onDispose called
+        RC->>RC: DisposableEffect re-enters
+        RC->>LC: LaunchedEffect: coroutine cancelled
+        RC->>RC: LaunchedEffect re-launches
+    end
+    RC->>RC: Composition completes
+    RC->>RC: SideEffect runs
+
+    Note over LC: 3. Leaving Composition
+    LC->>LC: remember values cleared
+    LC->>LC: DisposableEffect: onDispose called
+    LC->>LC: LaunchedEffect: coroutine cancelled
+    Note over LC: SideEffect: N/A (no composition)
+```
+
+## Effect Behavior Summary
+
+| Phase | LaunchedEffect | DisposableEffect | SideEffect |
+|-------|---------------|------------------|------------|
+| **Initial Composition** | Launches coroutine | Enters (runs) | ✅ Runs after composition succeeds |
+| **Recomposition (no key change)** | Continues | No change | ✅ Runs |
+| **Recomposition (key change)** | Cancel + relaunch | onDispose + re-enter | ✅ Runs |
+| **Leaving Composition** | Cancelled | onDispose called | N/A (no composition) |
+
+### SideEffect Clarification
+
+**Important:** `SideEffect` IS called after the initial composition completes — but it runs **after** the composition finishes, not during it. This means:
+
+- First composition completes → SideEffect runs (first screen view tracked)
+- Every recomposition → SideEffect runs again
+
+**Analytics Example:**
+````kotlin
+@Composable
+fun AnalyticsScreen(screenName: String) {
+    SideEffect {
+        // Called after EVERY successful composition
+        // (initial + all recompositions)
+        Analytics.trackScreenView(screenName)
+    }
+}
+````
 
 ## 9. Practical Android Patterns
 

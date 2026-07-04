@@ -1,6 +1,6 @@
 # Background Execution
 
-DAY 5-7: Background Execution &amp; WorkManager
+DAY 5-7: Background Execution & WorkManager
 
 Android background execution limits (API 26+) and recommended patterns.
 
@@ -35,12 +35,12 @@ After:
 - Wake locks limited
 
 What is "Background"?
-┌─────────────────────────────────────────────────────────────────────┐
-│ BACKGROUND APP =                                                      │
-│   • No visible Activity                                               │
-│   • No foreground Service                                             │
-│   • Not in foreground by system (notification listener, etc.)          │
-└─────────────────────────────────────────────────────────────────────┘
+
+| Background App Criteria |
+|-------------------------|
+| No visible Activity |
+| No foreground Service |
+| Not in foreground by system (notification listener, etc.) |
 
 What STILL WORKS:
 ✓ Foreground Services (with notification)
@@ -299,37 +299,39 @@ class MergeWorker(context: Context, params: WorkerParameters) :
 
 In ViewModel or Activity:
 
+````kotlin
 class UploadViewModel(application: Application) : AndroidViewModel(application) {
 
-fun uploadFile(fileUri: String): LiveData&lt;WorkInfo&gt; {
-val uploadWork = OneTimeWorkRequestBuilder&lt;UploadWorker&gt;()
-.setInputData(workDataOf("file" to fileUri))
-.build()
+    fun uploadFile(fileUri: String): LiveData<WorkInfo> {
+        val uploadWork = OneTimeWorkRequestBuilder<UploadWorker>()
+            .setInputData(workDataOf("file" to fileUri))
+            .build()
 
-WorkManager.getInstance(getApplication()).enqueue(uploadWork)
+        WorkManager.getInstance(getApplication()).enqueue(uploadWork)
 
-return WorkManager.getInstance(getApplication())
-.getWorkInfoByIdLiveData(uploadWork.id)
-}
+        return WorkManager.getInstance(getApplication())
+            .getWorkInfoByIdLiveData(uploadWork.id)
+    }
 }
 
 // In Compose:
 @Composable
 fun UploadProgress(workId: UUID) {
-val workInfo by WorkManager.getInstance(LocalContext.current)
-.getWorkInfoByIdLiveData(workId)
-.observeAsState()
+    val workInfo by WorkManager.getInstance(LocalContext.current)
+        .getWorkInfoByIdLiveData(workId)
+        .observeAsState()
 
-when (workInfo?.state) {
-WorkInfo.State.ENQUEUED -&gt; Text("Waiting...")
-WorkInfo.State.RUNNING -&gt; CircularProgressIndicator()
-WorkInfo.State.SUCCEEDED -&gt; Text("Complete!")
-WorkInfo.State.FAILED -&gt; Text("Failed")
-WorkInfo.State.BLOCKED -&gt; Text("Waiting for constraints...")
-WorkInfo.State.CANCELLED -&gt; Text("Cancelled")
-null -&gt; Text("Not started")
+    when (workInfo?.state) {
+        WorkInfo.State.ENQUEUED -> Text("Waiting...")
+        WorkInfo.State.RUNNING -> CircularProgressIndicator()
+        WorkInfo.State.SUCCEEDED -> Text("Complete!")
+        WorkInfo.State.FAILED -> Text("Failed")
+        WorkInfo.State.BLOCKED -> Text("Waiting for constraints...")
+        WorkInfo.State.CANCELLED -> Text("Cancelled")
+        null -> Text("Not started")
+    }
 }
-}
+````
 
 ## 8. Foreground Services
 
@@ -436,36 +438,21 @@ class DataSyncService : Service() {
 }
 ````
 
-## 9. Workmanager vs Foreground Service Decision Tree
+## 9. WorkManager vs Foreground Service Decision Tree
 
-┌─────────────────────────────────────┐
-│   Does the work need to run NOW?    │
-└──────────────┬──────────────────────┘
+```
+Does the work need to run NOW?
 │
-YES ───────────┴─────────── NO
-│                              │
-┌───────────▼──────────┐     ┌───────────▼──────────┐
-│ Is user actively       │     │  Can work be deferred?  │
-│ aware of the work?     │     │  (hours/days later)     │
-└───────────┬───────────┘     └───────────┬──────────┘
-│                              │
-YES ─────────┴───────── NO         YES ─────┴───── NO
-│                      │           │                │
-┌────────▼────────┐  ┌──────────▼────────┐  │         ┌────▼────┐
-│ FOREGROUND       │  │ Can work wait a    │  │         │ Not     │
-│ SERVICE          │  │ few minutes?       │  │         │ possible│
-│ (notification    │  └──────────┬─────────┘  │         │ on Oreo+│
-│  required)       │             │           │         └─────────┘
-└─────────────────┘   YES ──────┴───── NO    │
-│                │     │
-┌──────────▼────────┐  ┌────▼────┐│
-│ WORKMANAGER with   │  │ AlarmManager│
-│ expedited work     │  │ (exact time)│
-│ (API 31+)          │  │ or FCM      │
-└───────────────────┘  └───────────┘
-│ for high    │
-│ priority    │
-└─────────────┘
+├── YES → Is user actively aware?
+│         ├── YES → FOREGROUND SERVICE (notification required)
+│         └── NO  → Can work wait a few minutes?
+│                 ├── YES → WorkManager with expedited work (API 31+)
+│                 └── NO  → AlarmManager (exact time) or FCM
+│
+└── NO  → Can work be deferred (hours/days)?
+          ├── YES → WorkManager (standard)
+          └── NO  → Not possible on Oreo+
+```
 
 ## 10. Android 12+ (Api 31+) Service Changes
 
@@ -473,10 +460,12 @@ New requirements for Foreground Services:
 
 1. Must declare foregroundServiceType in manifest:
 
-&lt;service
-android:name=".MusicPlaybackService"
-android:foregroundServiceType="mediaPlayback"
-android:exported="false" /&gt;
+````xml
+<service
+    android:name=".MusicPlaybackService"
+    android:foregroundServiceType="mediaPlayback"
+    android:exported="false" />
+````
 
 Types available:
 - camera, connectedDevice, dataSync, location, mediaPlayback
@@ -485,11 +474,11 @@ Types available:
 
 2. Restrictions on starting from background:
 - Cannot start foreground service from background except:
-User interaction (notification tap, broadcast receiver)
-High-priority FCM notification
-Phone call, alarm, etc.
+  - User interaction (notification tap, broadcast receiver)
+  - High-priority FCM notification
+  - Phone call, alarm, etc.
 
-3. ShortService type: For quick tasks (&lt;3 minutes)
+3. ShortService type: For quick tasks (< 3 minutes)
 - No notification required initially
 - Must stop within 3 minutes
 - Automatically stopped if timeout
@@ -597,60 +586,75 @@ class ProgressUploadWorker(context: Context, params: WorkerParameters) :
 }
 ````
 
-## 12. Testing Workmanager
+## 12. Testing WorkManager
 
-// Enable testing init provider in AndroidManifest.xml:
-&lt;provider
-android:name="androidx.work.impl.WorkManagerInitializer"
-android:authorities="${applicationId}.workmanager-init"
-tools:node="remove" /&gt;
+Enable testing init provider in AndroidManifest.xml:
 
-// In Application.onCreate():
+````xml
+<provider
+    android:name="androidx.work.impl.WorkManagerInitializer"
+    android:authorities="${applicationId}.workmanager-init"
+    tools:node="remove" />
+````
+
+In Application.onCreate():
+
+````kotlin
 val config = Configuration.Builder()
-.setMinimumLoggingLevel(android.util.Log.DEBUG)
-.setExecutor(SynchronousExecutor()) // For tests
-.build()
+    .setMinimumLoggingLevel(android.util.Log.DEBUG)
+    .setExecutor(SynchronousExecutor()) // For tests
+    .build()
 
 WorkManager.initialize(this, config)
+````
 
-// Test:
+Test:
+
+````kotlin
 @Test
 fun testUploadWorker() {
-val worker = TestListenableWorkerBuilder&lt;UploadWorker&gt;(context)
-.setInputData(workDataOf("file" to "test.txt"))
-.build()
+    val worker = TestListenableWorkerBuilder<UploadWorker>(context)
+        .setInputData(workDataOf("file" to "test.txt"))
+        .build()
 
-runBlocking {
-val result = worker.doWork()
-assertThat(result).isEqualTo(Result.success())
+    runBlocking {
+        val result = worker.doWork()
+        assertThat(result).isEqualTo(Result.success())
+    }
 }
-}
+````
 
 ## Interview Questions
 
-Q: When would you use WorkManager vs Foreground Service?
+**Q: When would you use WorkManager vs Foreground Service?**
+
 A: WorkManager for deferrable, guaranteed work (sync, upload, cleanup).
 Foreground Service for immediate, user-aware work (playback, navigation).
 
-Q: How does WorkManager guarantee execution?
-A: Uses JobScheduler (API 21+), AlarmManager + BroadcastReceiver (API &lt; 21),
+**Q: How does WorkManager guarantee execution?**
+
+A: Uses JobScheduler (API 21+), AlarmManager + BroadcastReceiver (API < 21),
 or Firebase JobDispatcher (with Play Services). Falls back appropriately.
 
-Q: What's the minimum interval for PeriodicWorkRequest?
+**Q: What's the minimum interval for PeriodicWorkRequest?**
+
 A: 15 minutes. System enforces this to prevent battery drain.
 
-Q: How do you handle work chaining with conditional logic?
-A: Use beginUniqueWork() with ExistingWorkPolicy, then chain with .then().
-Worker outputs can be inputs to next worker via setInputMerger().
+**Q: How do you handle work chaining with conditional logic?**
 
-Q: What's new with Android 12 (API 31) for background execution?
-A: Foreground services need foregroundServiceType declaration.
+A: Use `beginUniqueWork()` with `ExistingWorkPolicy`, then chain with `.then()`.
+Worker outputs can be inputs to next worker via `setInputMerger()`.
+
+**Q: What's new with Android 12 (API 31) for background execution?**
+
+A: Foreground services need `foregroundServiceType` declaration.
 Background start restrictions tightened.
 Expedited WorkManager jobs available (use foreground service internally).
 
-Q: How do you observe work progress?
-A: WorkManager.getWorkInfoByIdLiveData() returns WorkInfo with state.
-Can also use setProgress() from worker for intermediate updates.
+**Q: How do you observe work progress?**
+
+A: `WorkManager.getWorkInfoByIdLiveData()` returns `WorkInfo` with state.
+Can also use `setProgress()` from worker for intermediate updates.
 
 Stub classes for compilation
 

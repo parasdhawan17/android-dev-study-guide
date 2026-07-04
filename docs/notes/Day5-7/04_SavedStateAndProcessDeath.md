@@ -35,34 +35,28 @@ import kotlinx.parcelize.Parcelize
 
 ## 1. Understanding Process Death
 
-WHAT IS PROCESS DEATH?
+### What is Process Death?
 
-Android kills app processes silently when memory is low. Key characteristics:
+Android kills app processes silently when memory is low. When the system is under memory pressure, your process can be terminated without any lifecycle callbacks being invoked.
 
-┌─────────────────────────────────────────────────────────────────────┐
-│ SCENARIO: User opens app → switches to camera → takes photos →      │
-│ returns to app via Recents                                          │
-├─────────────────────────────────────────────────────────────────────┤
-│ 1. Your app in foreground                                           │
-│      ↓                                                              │
-│ 2. User opens camera (your app backgrounded)                          │
-│      ↓                                                              │
-│ 3. Camera needs memory → System kills your process (SILENTLY!)       │
-│      NO onStop(), NO onDestroy(), NO onSaveInstanceState() called   │
-│      ↓                                                              │
-│ 4. User returns via Recents                                         │
-│      ↓                                                              │
-│ 5. System recreates your Activity with savedInstanceState Bundle     │
-│      onCreate(savedInstanceState) called with non-null bundle      │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Start([User opens app]) --> Foreground[App in foreground]
+    Foreground --> Camera[User opens camera<br/>App moves to background]
+    Camera --> LowMemory[System needs memory]
+    LowMemory --> Kill[Process killed silently<br/>No onStop / onDestroy / onSaveInstanceState]
+    Kill --> Recents[User returns via Recents]
+    Recents --> Recreate[System recreates Activity<br/>onCreate(savedInstanceState)]
+```
 
-IMPORTANT: onSaveInstanceState() is the ONLY reliable callback before death.
-It's called when:
+**Important:** `onSaveInstanceState()` is the only reliable callback before death.
+
+It is called when:
 - App goes to background (home button pressed)
 - Configuration change (rotation)
 - System predicts possible process death
 
-It's NOT called when:
+It is **not** called when:
 - User force-stops app (swipe away from Recents)
 - App crashes
 - System kills without warning

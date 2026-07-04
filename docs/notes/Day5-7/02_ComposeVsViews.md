@@ -23,20 +23,18 @@ import androidx.lifecycle.LifecycleOwner
 
 ## 1. Key Differences Table
 
-┌─────────────────────┬──────────────────────────┬────────────────────────────┐
-│ Aspect              │ View System              │ Jetpack Compose            │
-├─────────────────────┼──────────────────────────┼────────────────────────────┤
-│ UI Definition       │ XML + findViewById       │ Kotlin functions           │
-│ State Management    │ Manual view updates      │ Automatic recomposition    │
-│ Updates             │ Explicit setText/etc     │ State-driven, reactive     │
-│ Layout              │ Measure/Layout pass      │ Single-pass composition    │
-│ Custom Views        │ Extend View class      │ Composable functions       │
-│ Preview             │ XML visual editor        │ @Preview annotation        │
-│ Threading           │ UI thread required       │ Composition any thread     │
-│ Performance         │ View inflation cost      │ Compiler optimizations     │
-│ Learning Curve      │ XML + View APIs          │ Kotlin + Compose APIs      │
-│ Tooling             │ Layout Inspector         │ Compose Preview, Layout    │
-└─────────────────────┴──────────────────────────┴────────────────────────────┘
+| Aspect | View System | Jetpack Compose |
+|--------|-------------|-----------------|
+| UI Definition | XML + findViewById | Kotlin functions |
+| State Management | Manual view updates | Automatic recomposition |
+| Updates | Explicit setText/etc | State-driven, reactive |
+| Layout | Measure/Layout pass | Single-pass composition |
+| Custom Views | Extend View class | Composable functions |
+| Preview | XML visual editor | @Preview annotation |
+| Threading | UI thread required | Composition any thread |
+| Performance | View inflation cost | Compiler optimizations |
+| Learning Curve | XML + View APIs | Kotlin + Compose APIs |
+| Tooling | Layout Inspector | Compose Preview, Layout |
 
 ## 2. State Management Comparison
 

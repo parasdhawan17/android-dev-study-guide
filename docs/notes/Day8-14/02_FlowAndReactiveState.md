@@ -52,7 +52,80 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
 }
 ````
 
-## 3. Sharedflow
+## 3. LiveData
+
+LiveData is a lifecycle-aware observable data holder from Android Jetpack. It is the older Android equivalent of StateFlow for exposing UI state from a ViewModel.
+
+### Properties
+
+- Lifecycle-aware: only active observers (STARTED or RESUMED) receive updates.
+- Auto-cleanup: removes observers when the lifecycle is destroyed.
+- Always holds the latest emitted value (like StateFlow).
+- Safe to update from the main thread only (use `postValue` from background threads).
+
+### MutableLiveData
+
+Expose `LiveData<T>` publicly while mutating `MutableLiveData<T>` internally.
+
+````kotlin
+class ProfileViewModel : ViewModel() {
+    private val _user = MutableLiveData<User>()
+    val user: LiveData<User> = _user
+
+    fun loadUser(id: String) {
+        _user.value = User(id) // main thread only
+    }
+}
+````
+
+### Observing
+
+In a Fragment or Activity, observe with a `LifecycleOwner`.
+
+````kotlin
+class ProfileFragment : Fragment() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.user.observe(viewLifecycleOwner) { user ->
+            render(user)
+        }
+    }
+}
+````
+
+Avoid `observeForever` unless you manually manage the observer lifecycle.
+
+### Transformations
+
+`Transformations.map` derives a new LiveData. `Transformations.switchMap` flattens a LiveData that returns another LiveData.
+
+````kotlin
+val userName: LiveData<String> = Transformations.map(user) { it.name }
+
+val userDetails: LiveData<UserDetails> = Transformations.switchMap(userId) { id ->
+    repository.getUserDetails(id)
+}
+````
+
+### LiveData vs StateFlow
+
+| LiveData | StateFlow |
+|---|---|
+| Lifecycle-aware by default | Needs `repeatOnLifecycle` / `collectAsStateWithLifecycle` |
+| Main-thread updates only | Can update from any thread |
+| Android-specific | Kotlin coroutines-native |
+| Simpler API | Richer operators and Flow ecosystem |
+| Built-in lifecycle cleanup | Collector must be scoped correctly |
+
+Prefer StateFlow for new Kotlin-first code. LiveData remains valid in existing codebases and for simple UI state.
+
+### Gotchas
+
+- Updating `_liveData.value` from a background thread throws an exception; use `postValue` instead.
+- `Transformations` create new LiveData chains; don't chain excessively.
+- `observeForever` leaks if not removed.
+
+## 4. Sharedflow
 
 SharedFlow is a hot stream for events.
 
@@ -83,7 +156,7 @@ sealed class PaymentEvent {
 }
 ````
 
-## 4. Core Operators
+## 5. Core Operators
 
 map: transform each value.
 filter: keep matching values.
@@ -112,7 +185,7 @@ fun observeSearchResults(queryFlow: Flow<String>, repository: SearchRepository):
 }
 ````
 
-## 5. Collecting In UI
+## 6. Collecting In UI
 
 Android lifecycle matters. Do not collect forever from an Activity/Fragment lifecycle.
 
@@ -136,7 +209,7 @@ class FeedFragment : Fragment() {
 }
 ````
 
-## 6. Backpressure And Conflation
+## 7. Backpressure And Conflation
 
 If producer is faster than consumer:
 - buffer(): allow producer to get ahead up to buffer size.
@@ -154,7 +227,7 @@ suspend fun renderProgress(progressFlow: Flow<Int>) {
 }
 ````
 
-## Interview Questions
+## 8. Interview Questions
 
 Q: Flow vs LiveData?
 A: Flow is coroutine-native, supports rich operators, has cold and hot variants, and is not
@@ -163,6 +236,12 @@ lifecycle-aware by default. LiveData is lifecycle-aware by default but less expr
 Q: StateFlow vs SharedFlow?
 A: StateFlow is for state and always has a value. SharedFlow is for events or broadcasts and
 can be configured with replay/buffer behavior.
+
+Q: LiveData vs StateFlow?
+A: LiveData is lifecycle-aware by default and Android-specific; it must be updated on the main
+thread (use `postValue` from background threads). StateFlow is coroutine-native, can be updated
+from any thread, and requires lifecycle-aware collection helpers such as `repeatOnLifecycle` or
+`collectAsStateWithLifecycle` to avoid wasting resources.
 
 Q: What does flatMapLatest do?
 A: It starts a new inner flow for each upstream value and cancels the previous one. Useful for
@@ -183,6 +262,13 @@ class View
 class Bundle
 class LifecycleOwner { val lifecycle = Lifecycle(); val lifecycleScope = CoroutineScope(Dispatchers.Main) }
 class Lifecycle { enum class State { STARTED } }
-class FeedViewModel { val state: Flow<Any> = flowOf(Unit) }
+class FeedViewModel { val state: Flow<Any> = flowOf(Unit); val user: LiveData<User> = MutableLiveData() }
+data class UserDetails(val info: String = "")
+open class LiveData<T> { open var value: T? = null; fun observe(owner: LifecycleOwner, observer: (T) -> Unit) {} }
+class MutableLiveData<T> : LiveData<T>() { override var value: T? = null }
+object Transformations {
+    fun <X, Y> map(source: LiveData<X>, transform: (X) -> Y): LiveData<Y> = MutableLiveData()
+    fun <X, Y> switchMap(source: LiveData<X>, transform: (X) -> LiveData<Y>): LiveData<Y> = MutableLiveData()
+}
 fun renderProgressBar(progress: Int) {}
 ````

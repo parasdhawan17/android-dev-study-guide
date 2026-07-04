@@ -74,13 +74,50 @@ class TokenStore {
 }
 ````
 
-## 5. Semaphore
+## 5. Synchronized vs Mutex
 
-Semaphore limits concurrency.
-Use cases:
-- Limit parallel uploads to 3.
-- Avoid overloading API/database.
-- Protect scarce resources.
+| Aspect | `synchronized` / `@Synchronized` | `Mutex` |
+|---|---|---|
+| Blocking model | Blocks the entire OS thread | Suspends the coroutine, the thread is freed for other work |
+| Coroutine friendly | No, can pin a dispatcher thread and cause thread starvation | Yes, designed for coroutines |
+| Reentrant | Yes, the same thread can re-enter the same lock | No, a single coroutine cannot re-acquire a `Mutex` it already holds |
+| API style | `synchronized(lock) { }` or `@Synchronized` on JVM | `mutex.withLock { }` from `kotlinx.coroutines.sync` |
+| Scope | Good for Java-style thread code and blocking critical sections | Good for protecting shared mutable state inside coroutines |
+| Cancellation | Can not be cleanly cancelled while waiting | Can be integrated with coroutine cancellation and structured concurrency |
+
+Which is better? It depends on the code you are writing.
+
+- Use `Mutex` when you are inside Kotlin coroutines, especially when the critical section calls other `suspend` functions or does I/O. It keeps the thread pool alive and avoids blocking the main or dispatcher threads.
+- Use `synchronized` only for legacy thread-based code, short JVM-only critical sections, or when you do not use coroutines at all.
+
+In modern Android code written with coroutines, prefer `Mutex`.
+
+## 6. Semaphore
+
+A Semaphore is a synchronization primitive that controls access to a shared resource by
+maintaining a fixed number of **permits**. A coroutine must acquire a permit before entering the
+critical section, and releases it when done. Only N coroutines can hold a permit at the same time.
+
+Think of it like a parking lot with a fixed number of spaces. Each car (coroutine) needs a space
+(permit) to enter. When the lot is full, new cars wait until another car leaves and frees a space.
+
+### How it differs from Mutex
+
+| | `Mutex` | `Semaphore` |
+|---|---|---|
+| Permits | 1 | N (configurable) |
+| Purpose | Only one coroutine at a time | Up to N coroutines at a time |
+| Typical use | Protect shared mutable state | Limit concurrency, throttle, rate limit |
+
+Analogy: a mutex is a single-lane road; a semaphore is a multi-lane road with a fixed number of lanes.
+
+### Use cases
+
+- Limit parallel uploads to a fixed number.
+- Avoid overloading an API or database.
+- Protect scarce resources like connection pools or background workers.
+
+### Example
 
 ````kotlin
 class ImageUploader(private val api: UploadApi) {
@@ -98,11 +135,41 @@ class ImageUploader(private val api: UploadApi) {
 }
 ````
 
-## 6. Channels And Actor Pattern
+In this example, even if you start 100 uploads, only 3 run in parallel at any moment. The rest wait
+until a permit is released. This prevents the upload API from being flooded.
 
-A Channel is a coroutine queue.
-Actor pattern means one coroutine owns state and processes messages sequentially.
-This avoids locks because only the actor touches the state.
+## 7. Channels And Actor Pattern
+
+### Channels
+
+A `Channel` is a coroutine-based queue that supports suspending `send` and `receive`. It is the
+coroutine equivalent of a `BlockingQueue`, but it suspends instead of blocking the thread. Channels
+are useful for passing data between coroutines and for building pipelines.
+
+Common channel types:
+
+| Type | Behavior |
+|---|---|
+| Rendezvous (`Channel()` default) | Sender suspends until receiver is ready, and vice versa. No buffer. |
+| Buffered (`Channel(capacity = N)`) | Holds up to N values before senders start suspending. |
+| Conflated (`Channel.CONFLATED`) | Keeps only the latest value, overwriting older unread values. |
+| Unlimited (`Channel.UNLIMITED`) | Buffers all values without ever suspending the sender. |
+
+### Actor Pattern
+
+The actor pattern means one coroutine owns a piece of mutable state and processes messages
+sequentially. Instead of many coroutines locking shared data, they send commands to the actor. The
+actor reads commands from a channel and updates the state in a single sequential loop. This avoids
+locks because only the actor touches the state.
+
+### Why use an actor?
+
+- No explicit locks are needed. Single-owner access removes the race condition.
+- State mutations are serialized by the channel.
+- It works well when multiple coroutines need to read and write the same state.
+- It can return results to callers using a `CompletableDeferred` or `Channel`.
+
+### Example
 
 ````kotlin
 sealed class CacheCommand {
@@ -133,7 +200,15 @@ class CacheActor(scope: CoroutineScope) {
 }
 ````
 
-## 7. Deadlocks
+### Modern alternatives
+
+The `actor` builder is marked as experimental in `kotlinx.coroutines` and is not widely used in
+production Android code. For state that needs to be observed from the UI, prefer a `StateFlow` with a
+single owner. For one-time events, use a `SharedFlow` or a plain `Channel` consumed by a single
+coroutine. The core idea remains the same: confine mutable state to one coroutine and expose it
+through an immutable observable stream.
+
+## 8. Deadlocks
 
 Deadlock happens when two tasks wait forever for each other.
 Classic pattern:
@@ -151,8 +226,11 @@ Q: What is thread safety?
 A: Code is thread-safe if it remains correct when accessed concurrently by multiple threads.
 
 Q: Mutex vs synchronized?
-A: synchronized blocks a thread. Mutex suspends a coroutine, returning the thread to the pool.
-Prefer Mutex inside coroutine code.
+A: `synchronized` is a JVM monitor lock that blocks the whole OS thread. `Mutex` is a coroutine
+primitive that suspends the coroutine and frees the thread for other work. `synchronized` is
+reentrant, while a standard Kotlin `Mutex` is not. Use `Mutex` in coroutine-based Android code
+because it avoids blocking dispatchers and works cleanly with cancellation. Use `synchronized`
+only for legacy thread-based code or short blocking JVM critical sections.
 
 Q: How can you avoid shared mutable state?
 A: Use immutable data, StateFlow updates, actors/single owner, repositories as state boundaries,
