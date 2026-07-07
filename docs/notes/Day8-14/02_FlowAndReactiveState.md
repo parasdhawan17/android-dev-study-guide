@@ -107,15 +107,138 @@ val userDetails: LiveData<UserDetails> = Transformations.switchMap(userId) { id 
 }
 ````
 
-### LiveData vs StateFlow
+### LiveData vs StateFlow in Detail
 
-| LiveData | StateFlow |
-|---|---|
-| Lifecycle-aware by default | Needs `repeatOnLifecycle` / `collectAsStateWithLifecycle` |
-| Main-thread updates only | Can update from any thread |
-| Android-specific | Kotlin coroutines-native |
-| Simpler API | Richer operators and Flow ecosystem |
-| Built-in lifecycle cleanup | Collector must be scoped correctly |
+Both LiveData and StateFlow are observable state holders designed to expose UI state from a ViewModel. StateFlow is the modern Kotlin-first alternative, while LiveData is lifecycle-aware by default.
+
+| Topic | LiveData | StateFlow |
+|---|---|---|
+| Lifecycle awareness | Built-in. Only active observers (STARTED/RESUMED) receive updates, and observers are auto-removed when destroyed. | Not lifecycle-aware. You must scope the collector using `repeatOnLifecycle` or `collectAsStateWithLifecycle`. |
+| Threading | `setValue` must be called on the main thread. Use `postValue` from background threads. | `value` can be updated from any thread, but it is idiomatic to update from a coroutine. |
+| Initial value | `MutableLiveData` can be created without an initial value. | `MutableStateFlow` requires a non-null initial value. |
+| Update API | `liveData.value = x` | `stateFlow.value = x` |
+| Operators | Limited: `Transformations.map`, `Transformations.switchMap`, `Transformations.distinctUntilChanged`. | Full Flow operators: `map`, `filter`, `combine`, `flatMapLatest`, `debounce`, `catch`, etc. |
+| Coroutine integration | Requires `liveData { ... }` builder or `viewModelScope.launch` with `postValue`. | Native coroutine integration; works seamlessly with `viewModelScope`. |
+| Replay behavior | Replays the latest value to new observers. | Replays the latest value to new collectors (replay = 1). |
+| Configuration changes | Survives configuration changes via ViewModel retention. | Also survives because it lives in the ViewModel. |
+| Testing | Requires `InstantTaskExecutorRule` and `getOrAwaitValue` helpers. | Plain coroutine tests with `Turbine` or `backgroundScope`. |
+| Use case | Existing Java/XML codebases, simple Android UI state. | New Kotlin-first projects, complex reactive streams, Compose. |
+
+### Equivalent Examples
+
+#### 1. Basic Counter ViewModel
+
+LiveData version:
+
+````kotlin
+class CounterViewModel : ViewModel() {
+    private val _count = MutableLiveData(0)
+    val count: LiveData<Int> = _count
+
+    fun increment() {
+        _count.value = (_count.value ?: 0) + 1
+    }
+}
+````
+
+StateFlow version:
+
+````kotlin
+class CounterViewModel : ViewModel() {
+    private val _count = MutableStateFlow(0)
+    val count: StateFlow<Int> = _count.asStateFlow()
+
+    fun increment() {
+        _count.value += 1
+    }
+}
+````
+
+#### 2. Observing in a Fragment
+
+LiveData observation:
+
+````kotlin
+class CounterFragment : Fragment() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.count.observe(viewLifecycleOwner) { count ->
+            renderCount(count)
+        }
+    }
+}
+````
+
+StateFlow observation with lifecycle-aware collection:
+
+````kotlin
+class CounterFragment : Fragment() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.count.collect { count ->
+                    renderCount(count)
+                }
+            }
+        }
+    }
+}
+````
+
+In Jetpack Compose, StateFlow collection is shorter:
+
+````kotlin
+val count by viewModel.count.collectAsStateWithLifecycle()
+Text(text = count.toString())
+````
+
+#### 3. Deriving a Filtered State
+
+LiveData transformation:
+
+````kotlin
+val isEven: LiveData<Boolean> = Transformations.map(count) { it % 2 == 0 }
+````
+
+StateFlow transformation:
+
+````kotlin
+val isEven: StateFlow<Boolean> = count
+    .map { it % 2 == 0 }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+````
+
+### Threading Differences
+
+LiveData enforces main-thread updates to protect UI observers. If you update from a background thread, you must use `postValue`:
+
+````kotlin
+viewModelScope.launch(Dispatchers.IO) {
+    val data = repository.loadFromDisk()
+    _liveData.postValue(data) // queues update on main thread
+}
+````
+
+StateFlow has no such restriction because collectors are coroutines. However, it is idiomatic to update from a coroutine in the ViewModel:
+
+````kotlin
+viewModelScope.launch {
+    _state.value = repository.loadFromDisk() // IO dispatch inside repository
+}
+````
+
+### Lifecycle Differences
+
+LiveData automatically pauses emissions when the observer is not active and removes the observer when the lifecycle is destroyed. This is why the Fragment example only needs `observe(viewLifecycleOwner)`.
+
+StateFlow collectors do not pause automatically. A collector keeps running as long as its coroutine scope is alive. Without `repeatOnLifecycle`, a Fragment would collect even in the background, wasting battery and possibly causing crashes if the UI is not ready. Always use `repeatOnLifecycle` or `collectAsStateWithLifecycle`.
+
+### When to Choose Which
+
+- **StateFlow** for new Kotlin-first projects, especially with Compose, multiplatform modules, or complex state transformations.
+- **LiveData** for legacy Java/XML codebases, simple Android-only screens, or when you want automatic lifecycle handling without extra collection code.
+- They can coexist during a migration. Many teams expose StateFlow from the ViewModel and convert to LiveData at the UI layer only if needed.
 
 Prefer StateFlow for new Kotlin-first code. LiveData remains valid in existing codebases and for simple UI state.
 
@@ -271,4 +394,9 @@ object Transformations {
     fun <X, Y> switchMap(source: LiveData<X>, transform: (X) -> LiveData<Y>): LiveData<Y> = MutableLiveData()
 }
 fun renderProgressBar(progress: Int) {}
+fun renderCount(count: Int) {}
+class TextView : View()
+object SharingStarted { fun WhileSubscribed(stopTimeoutMillis: Long) = Any() }
+fun <T> Flow<T>.stateIn(scope: CoroutineScope, started: Any, initialValue: T): StateFlow<T> = MutableStateFlow(initialValue)
+fun <T> StateFlow<T>.collectAsStateWithLifecycle(): Any = value
 ````

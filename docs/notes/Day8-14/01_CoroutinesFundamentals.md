@@ -84,7 +84,45 @@ suspend fun loadDashboard(repository: DashboardRepository): Dashboard {
 }
 ````
 
-## 4. Dispatchers
+## 4. Running Coroutines Sequentially
+
+Sequential execution means the second coroutine starts only after the first one completes. In Kotlin coroutines, the simplest way is to call two `suspend` functions one after another inside the same coroutine.
+
+````kotlin
+suspend fun loadUserThenOrders(repository: OrderRepository): UserOrders {
+    val user = repository.getUser()          // completes first
+    val orders = repository.getOrders(user.id) // starts only after getUser returns
+    return UserOrders(user, orders)
+}
+````
+
+When using `async`, call `await()` on the first `Deferred` before starting the second `async`. This guarantees the second operation sees the result of the first.
+
+````kotlin
+suspend fun loadUserThenOrders(repository: OrderRepository): UserOrders = coroutineScope {
+    val user = async { repository.getUser() }.await()             // wait for the user
+    val orders = async { repository.getOrders(user.id) }.await()  // starts after user is ready
+    UserOrders(user, orders)
+}
+````
+
+Sequential vs concurrent:
+
+| Style | Code pattern | Result |
+|-------|--------------|--------|
+| Sequential | `val a = async { ... }.await(); val b = async { ... }.await()` | Second waits for first. |
+| Concurrent | `val a = async { ... }; val b = async { ... }; awaitAll(a, b)` | Both run at the same time. |
+
+For two fire-and-forget `launch` blocks that must run in order, put them in the same coroutine and call them one after another.
+
+````kotlin
+viewModelScope.launch {
+    syncProfile()   // completes first
+    syncSettings()  // runs only after syncProfile finishes
+}
+````
+
+## 5. Dispatchers
 
 Dispatchers decide where coroutine code runs.
 
@@ -113,7 +151,7 @@ suspend fun loadAndParse(repository: Repository): ParsedData = withContext(Dispa
 }
 ````
 
-## 5. Cancellation
+## 6. Cancellation
 
 Coroutine cancellation is cooperative.
 A coroutine must reach a suspension point or check cancellation to stop.
@@ -137,7 +175,7 @@ suspend fun computeHashes(files: List<FileData>): List<String> = withContext(Dis
 }
 ````
 
-## 6. Exception Handling
+## 7. Exception Handling
 
 Important rules:
 - In launch, uncaught exceptions crash the coroutine and propagate to parent.
@@ -162,7 +200,7 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 }
 ````
 
-## 7. Common Android Patterns
+## 8. Common Android Patterns
 
 Pattern: expose immutable StateFlow from ViewModel
 
@@ -215,6 +253,11 @@ Q: When should you use withContext(Dispatchers.IO)?
 A: Around blocking IO or calls whose implementation blocks threads. For already-suspending
 Retrofit calls, it is often unnecessary unless doing additional blocking work.
 
+Q: How do you run two coroutines sequentially?
+A: Call the suspend functions in order inside one coroutine, or call `await()` on the first
+`async` before starting the second one. Use a single `launch` or `async` block and rely on
+coroutine suspension between calls.
+
 Simple stubs for study snippets
 
 ````kotlin
@@ -222,6 +265,7 @@ data class User(val id: String)
 data class Settings(val theme: String)
 data class UserProfile(val user: User, val settings: Settings)
 data class Dashboard(val user: User, val cards: List<String>, val notifications: List<String>)
+data class UserOrders(val user: User, val orders: List<String>)
 data class ParsedData(val value: String)
 data class FileData(val bytes: ByteArray)
 data class SearchUiState(val results: List<String> = emptyList(), val isLoading: Boolean = false, val error: String? = null)
@@ -229,8 +273,11 @@ suspend fun fetchUser(id: String) = User(id)
 suspend fun fetchSettings(id: String) = Settings("system")
 fun parseLargePayload(raw: String) = ParsedData(raw)
 fun sha256(bytes: ByteArray) = bytes.contentHashCode().toString()
+suspend fun syncProfile() { }
+suspend fun syncSettings() { }
 interface ProfileRepository { suspend fun getProfile(userId: String): UserProfile }
 interface DashboardRepository { suspend fun getUser(): User; suspend fun getCards(): List<String>; suspend fun getNotifications(): List<String> }
+interface OrderRepository { suspend fun getUser(): User; suspend fun getOrders(userId: String): List<String> }
 interface Repository { fun readLargeFile(): String }
 interface FeedRepository { suspend fun getFeed(): List<String> }
 interface SearchRepository { suspend fun search(query: String): List<String> }
