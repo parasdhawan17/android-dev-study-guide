@@ -115,3 +115,5 @@ nav:
           - 'Practice Exercises': 'notes/Day35-42/05_PracticeExercises.md'
       - 'Misc':
           - 'Parcelable And Serializable': 'notes/misc/01_ParcelableAndSerializable.md'
+          - 'Compose Vs Xml Performance': 'notes/misc/02_ComposeVsXmlPerformance.md'
+          - 'Recycler View Optimisations': 'notes/misc/03_RecyclerViewOptimisations.md'
